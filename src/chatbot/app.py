@@ -53,6 +53,16 @@ with st.sidebar:
     st.markdown("🟢 **Warehouse**: Supabase PostgreSQL 17")
     st.markdown("🟢 **Model**: Gemini 2.5 Flash")
     st.markdown("🔒 **Guardrail**: Triple-Layer AST Active")
+
+    api_key_env = os.getenv("GEMINI_API_KEY")
+    if not api_key_env:
+        user_key = st.text_input("Gemini API Key", type="password", help="Enter key from Google AI Studio or set GEMINI_API_KEY in .env")
+        if user_key:
+            os.environ["GEMINI_API_KEY"] = user_key
+            st.success("API key loaded for session.")
+        else:
+            st.info("💡 Set GEMINI_API_KEY in .env or enter above to enable natural language translation.")
+
     st.divider()
 
     st.markdown("### Suggested Analytical Inquiries")

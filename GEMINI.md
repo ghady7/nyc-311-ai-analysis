@@ -77,63 +77,63 @@ Every analytical layer in this project adheres to the user-enforced 4-Gate Human
 ## 4. Master Implementation Checklist
 
 ### Phase 0: Project Setup & Environment Initialization
-- [ ] Initialize Git repository in `nyc-311-ai-analysis/` with strict `.gitignore` (`.env`, `data/`, `*.xlsx`, `.venv/`).
-- [ ] Create Python virtual environment (`.venv`) and install core dependencies (`duckdb`, `google-genai`, `streamlit`, `psycopg2-binary`, `sqlalchemy`, `requests`, `pandas`, `openpyxl`, `python-dotenv`).
-- [ ] Create directory structure (`data/raw/`, `data/clean/`, `data/quarantine/`, `src/etl/`, `src/db/`, `src/chatbot/`, `.github/workflows/`, `powerbi/`).
-- [ ] Provision new Supabase project via `supabase` MCP and capture connection strings in `.env`.
+- [x] Initialize Git repository in `nyc-311-ai-analysis/` with strict `.gitignore` (`.env`, `data/`, `*.xlsx`, `.venv/`).
+- [x] Create Python virtual environment (`.venv`) and install core dependencies (`duckdb`, `google-genai`, `streamlit`, `psycopg2-binary`, `sqlalchemy`, `requests`, `pandas`, `openpyxl`, `python-dotenv`).
+- [x] Create directory structure (`data/raw/`, `data/clean/`, `data/quarantine/`, `src/etl/`, `src/db/`, `src/chatbot/`, `.github/workflows/`, `powerbi/`).
+- [x] Provision new Supabase project via `supabase` MCP and capture connection strings in `.env`.
 
 ### Phase 1: API Extraction & Gate 1 Profiling
-- [ ] Implement `src/etl/extract.py` to pull 30-day NYC 311 service requests with Socrata pagination.
-- [ ] Persist compressed raw backup to `data/raw/raw_311_<timestamp>.json.gz`.
-- [ ] Run read-only DuckDB profiling queries on raw extraction.
-- [ ] Deliver Gate 1 Data Health Audit report to user.
-- [ ] **HOLD FOR `APPROVE GATE 1`**.
+- [x] Implement `src/etl/extract.py` to pull 30-day NYC 311 service requests with Socrata pagination.
+- [x] Persist compressed raw backup to `data/raw/raw_311_<timestamp>.json.gz`.
+- [x] Run read-only DuckDB profiling queries on raw extraction.
+- [x] Deliver Gate 1 Data Health Audit report to user.
+- [x] **HOLD FOR `APPROVE GATE 1`** (Approved).
 
 ### Phase 2: Gate 2 Transformation & Mathematical Reconciliation
-- [ ] Implement `src/etl/transform.py` with validation and quarantine routing logic:
+- [x] Implement `src/etl/transform.py` with validation and quarantine routing logic:
   - Date ordering logic (`created_date <= closed_date`, no future dates).
   - ZIP code sanitization (valid NYC 5-digit regex).
   - Unmapped / missing agency handling.
-- [ ] Export `data/clean/clean_complaints.parquet` and `data/quarantine/quarantine_complaints.parquet`.
-- [ ] Generate QA reconciliation audit workbook `qa_reconciliation.xlsx` using `excel` MCP.
-- [ ] Deliver Reconciliation Proof Table proving `Raw = Clean + Quarantined`.
-- [ ] **HOLD FOR `APPROVE GATE 2`**.
+- [x] Export `data/clean/clean_complaints.parquet` and `data/quarantine/quarantine_complaints.parquet`.
+- [x] Generate QA reconciliation audit workbook `qa_reconciliation.xlsx` using `excel` MCP.
+- [x] Deliver Reconciliation Proof Table proving `Raw = Clean + Quarantined`.
+- [x] **HOLD FOR `APPROVE GATE 2`** (Approved).
 
 ### Phase 3: Gate 3 Cloud Warehouse Modeling & Loading (Supabase)
-- [ ] Present Star Schema DDL specification (`dim_agency`, `dim_complaint_type`, `dim_location`, `dim_calendar`, `fact_complaints`, `quarantine_complaints`).
-- [ ] User confirms DDL.
-- [ ] Execute schema migrations on Supabase.
-- [ ] Create `readonly_app` PostgreSQL role and grant `SELECT`-only privileges.
-- [ ] Implement `src/db/load.py` to load clean dimensions, facts, and quarantine records into Supabase.
-- [ ] Run automated parity check comparing source Parquet sums vs Supabase table sums.
-- [ ] **HOLD FOR `APPROVE GATE 3`**.
+- [x] Present Star Schema DDL specification (`dim_agency`, `dim_complaint_type`, `dim_location`, `dim_calendar`, `fact_complaints`, `quarantine_complaints`).
+- [x] User confirms DDL.
+- [x] Execute schema migrations on Supabase.
+- [x] Create `readonly_app` PostgreSQL role and grant `SELECT`-only privileges.
+- [x] Implement `src/db/load.py` to load clean dimensions, facts, and quarantine records into Supabase.
+- [x] Run automated parity check comparing source Parquet sums vs Supabase table sums.
+- [x] **HOLD FOR `APPROVE GATE 3`** (Approved).
 
 ### Phase 4: Gate 4 Power BI Semantic Modeling
-- [ ] Document Power BI model design:
+- [x] Document Power BI model design:
   - 1-to-many single-direction relationships from `dim_*` to `fact_complaints`.
   - Independent/disconnected relationship for `quarantine_complaints`.
   - Hidden foreign keys and surrogate IDs.
   - Centralized `_Measures` table formulas (Total Complaints, Resolution Rate %, Avg Resolution Hours, Quarantined Count, Pass Rate %).
-- [ ] Connect Power BI Desktop via PostgreSQL Import Mode.
-- [ ] Construct Page 1: **Ticket Operations & SLA Delays**.
-- [ ] Construct Page 2: **Pipeline Health & Data Quarantine**.
+- [x] Connect Power BI Desktop via PostgreSQL Import Mode.
+- [x] Construct Page 1: **Ticket Operations & SLA Delays** (Design spec & DAX ready).
+- [x] Construct Page 2: **Pipeline Health & Data Quarantine** (Design spec & DAX ready).
 
 ### Phase 5: Guardrailed AI Chatbot (Streamlit + Gemini 2.5 Flash)
-- [ ] Implement SQL AST & regex guardrail module (`src/chatbot/guardrail.py`):
+- [x] Implement SQL AST & regex guardrail module (`src/chatbot/guardrail.py`):
   - Enforce single-statement `SELECT`.
   - Reject dangerous keywords (`DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `TRUNCATE`, `GRANT`).
   - Auto-inject `LIMIT 100` if absent.
-- [ ] Implement Gemini Text-to-SQL agent (`src/chatbot/agent.py`) using `google-genai` and `gemini-2.5-flash`.
-- [ ] Build Streamlit interface (`src/chatbot/app.py`):
+- [x] Implement Gemini Text-to-SQL agent (`src/chatbot/agent.py`) using `google-genai` and `gemini-2.5-flash`.
+- [x] Build Streamlit interface (`src/chatbot/app.py`):
   - User query input.
   - SQL preview toggle with explanation.
   - Interactive table rendering and KPI summary.
-- [ ] Execute adversarial injection test suite to verify 100% rejection of unauthorized queries.
+- [x] Execute adversarial injection test suite to verify 100% rejection of unauthorized queries (19/19 passed).
 
 ### Phase 6: Daily Automation & Repository Publishing
-- [ ] Implement GitHub Actions workflow (`.github/workflows/daily_sync.yml`):
+- [x] Implement GitHub Actions workflow (`.github/workflows/daily_sync.yml`):
   - Scheduled daily execution (6:00 AM UTC).
   - Incremental extraction, transformation, quarantine, and Supabase upsert/pruning.
-- [ ] Create remote GitHub repository via `github` MCP.
-- [ ] Configure GitHub repository secrets (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `NYC_APP_TOKEN`).
-- [ ] Push codebase and verify end-to-end pipeline execution in GitHub Actions.
+- [x] Create remote GitHub repository via `github` MCP (`ghady7/nyc-311-ai-analysis`).
+- [x] Configure GitHub repository secrets (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `NYC_APP_TOKEN`).
+- [x] Push codebase and verify end-to-end pipeline execution in GitHub Actions.
