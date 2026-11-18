@@ -1,0 +1,36 @@
+# Virtual Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Secrets & Credentials
+.env
+.env.*
+!.env.example
+
+# Local Data Artifacts
+data/raw/*
+!data/raw/.gitkeep
+data/clean/*
+!data/clean/.gitkeep
+data/quarantine/*
+!data/quarantine/.gitkeep
+*.parquet
+*.csv
+*.json.gz
+*.xlsx
+
+# Python & Testing artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS & Editor configurations
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
