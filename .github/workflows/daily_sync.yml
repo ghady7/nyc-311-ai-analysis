@@ -1,0 +1,55 @@
+name: NYC 311 Daily Data Warehouse Sync
+
+on:
+  schedule:
+    # Runs daily at 06:00 AM UTC (02:00 AM Eastern Time)
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync-pipeline:
+    name: Extract, Transform, Validate & Load
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Guardrail & Security Test Suite
+        run: |
+          pytest tests/ -v
+
+      - name: Execute Socrata Extraction (Rolling 30 Days)
+        env:
+          NYC_APP_TOKEN: ${{ secrets.NYC_APP_TOKEN }}
+        run: |
+          python src/etl/extract.py --days 30 --max-records 100000
+
+      - name: Execute Transformation & Quarantine Routing
+        run: |
+          python src/etl/transform.py
+
+      - name: Ingest Star Schema & Verify Parity in Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python src/db/load.py
+
+      - name: Upload QA Reconciliation Audit Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-reconciliation-report
+          path: qa_reconciliation.xlsx
+          retention-days: 14
