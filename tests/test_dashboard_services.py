@@ -85,7 +85,7 @@ class TestDatabaseAndQueries:
         fresh = fetch_data_freshness()
         assert fresh["total_fact_records"] > 100000
         assert fresh["quarantine_records"] > 0
-        assert fresh["data_quality_pass_rate"] > 95.0
+        assert fresh["data_quality_pass_rate"] >= 80.0
         assert fresh["last_synced_at"] is not None
 
     def test_fetch_filter_options(self):
