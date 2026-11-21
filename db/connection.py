@@ -52,7 +52,7 @@ def execute_via_https_rpc(sql_query: str, timeout: int = DEFAULT_TIMEOUT) -> Dic
     """
     Execute read-only SQL query via Supabase PostgREST RPC endpoint.
     This guarantees 100% IPv4/IPv6 compatibility on cloud hosts (e.g. Render)
-    and executes inside the hardened execute_readonly_query security definer.
+    and executes inside the hardened execute_readonly_query security invoker.
     """
     url, key = get_supabase_credentials()
     if not url:
