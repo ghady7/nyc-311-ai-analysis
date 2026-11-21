@@ -11,6 +11,7 @@ jobs:
     name: Extract, Transform, Validate & Load
     runs-on: ubuntu-latest
     env:
+      PYTHONPATH: .
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
