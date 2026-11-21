@@ -10,6 +10,13 @@ jobs:
   sync-pipeline:
     name: Extract, Transform, Validate & Load
     runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NYC_APP_TOKEN: ${{ secrets.NYC_APP_TOKEN }}
+      RETENTION_DAYS: ${{ vars.RETENTION_DAYS || '30' }}
 
     steps:
       - name: Check out repository
