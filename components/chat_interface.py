@@ -172,15 +172,12 @@ def render_copilot_chat() -> None:
     - Chat turn history with SQL inspection, auto-visualization, and CSV download
     - Real-time natural language query execution with AST safety
     """
-    st.markdown("""
-    <div class="copilot-hero-banner">
-        <div class="copilot-badge">🤖 GEMINI 2.5 FLASH + SUPABASE POSTGRESQL 17</div>
-        <div class="copilot-title">Executive AI Data Analyst Copilot</div>
-        <div class="copilot-desc">
-            Inquire in natural language. Queries are parsed and translated to SQL against the verified Star Schema warehouse, verified against read-only AST guardrails, and visualized instantly.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    with st.container(border=True):
+        st.caption("NATURAL LANGUAGE SQL INTERFACE · GEMINI 2.5 FLASH")
+        st.subheader("AI Data Analyst Copilot")
+        st.caption(
+            "Inquire in plain language. Queries are parsed and translated to SQL against the PostgreSQL Star Schema warehouse, audited by triple-layer AST guardrails, and visualized dynamically."
+        )
 
     # Initialize chat message history
     if "copilot_messages" not in st.session_state:
@@ -190,7 +187,7 @@ def render_copilot_chat() -> None:
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         user_key = st.text_input(
-            "🔑 Gemini API Key Required",
+            "Gemini API Key Required",
             type="password",
             help="Enter your Google AI Studio API key. It remains session-isolated.",
             key="user_entered_gemini_key"
@@ -202,35 +199,31 @@ def render_copilot_chat() -> None:
             api_key = st.session_state.get("session_gemini_key")
 
     # Clickable Starter Questions
-    st.markdown("<div style='font-size: 0.8rem; font-weight: 700; color: #64748B; margin-top: 10px; margin-bottom: 6px;'>SUGGESTED ANALYTICAL INQUIRIES</div>", unsafe_allow_html=True)
+    st.caption("SUGGESTED ANALYTICAL INQUIRIES")
     clicked_question: Optional[str] = None
     cols = st.columns(2)
-    icons = ["📈", "🏢", "🏙️", "🛡️"]
     for idx, q_text in enumerate(STARTER_QUESTIONS):
         with cols[idx % 2]:
-            icon = icons[idx % len(icons)]
-            if st.button(f"{icon} {q_text}", key=f"starter_q_{idx}", use_container_width=True):
+            if st.button(q_text, key=f"starter_q_{idx}", use_container_width=True):
                 clicked_question = q_text
-
-    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
     # Render previous conversation history
     for i, msg in enumerate(st.session_state.copilot_messages):
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
             if msg.get("guarded_sql"):
-                with st.expander("🔍 Inspect Verified SQL Query"):
+                with st.expander("Inspect Verified SQL Query"):
                     st.code(msg["guarded_sql"], language="sql")
             df = msg.get("df")
             if df is not None and not df.empty:
-                tab_viz, tab_data = st.tabs(["📊 Visualization", "📋 Data Table"])
+                tab_viz, tab_data = st.tabs(["Visualization", "Data Table"])
                 with tab_viz:
                     render_chat_visualization(df, key_prefix=f"history_{i}")
                 with tab_data:
                     st.dataframe(df, use_container_width=True)
                     csv_bytes = df.to_csv(index=False).encode("utf-8")
                     st.download_button(
-                        label="📥 Download CSV Dataset",
+                        label="Download CSV Dataset",
                         data=csv_bytes,
                         file_name=f"nyc311_query_result_{i}.csv",
                         mime="text/csv",
@@ -259,20 +252,20 @@ def render_copilot_chat() -> None:
                 if result["success"]:
                     st.markdown(result["summary"])
                     if result["guarded_sql"]:
-                        with st.expander("🔍 Inspect Verified SQL Query"):
+                        with st.expander("Inspect Verified SQL Query"):
                             st.code(result["guarded_sql"], language="sql")
 
                     df = result["df"]
                     current_idx = len(st.session_state.copilot_messages)
                     if not df.empty:
-                        tab_viz, tab_data = st.tabs(["📊 Visualization", "📋 Data Table"])
+                        tab_viz, tab_data = st.tabs(["Visualization", "Data Table"])
                         with tab_viz:
                             render_chat_visualization(df, key_prefix=f"live_{current_idx}")
                         with tab_data:
                             st.dataframe(df, use_container_width=True)
                             csv_bytes = df.to_csv(index=False).encode("utf-8")
                             st.download_button(
-                                label="📥 Download CSV Dataset",
+                                label="Download CSV Dataset",
                                 data=csv_bytes,
                                 file_name=f"nyc311_query_result_{current_idx}.csv",
                                 mime="text/csv",

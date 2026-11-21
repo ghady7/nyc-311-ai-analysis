@@ -2,6 +2,7 @@
 Sidebar Filter Controls for NYC 311 Executive Analytics.
 Provides reactive global filtering across Date Range, Borough, Agency,
 Complaint Category, and Ticket Status with quick presets and instant reset capability.
+Uses native Streamlit components with zero raw HTML to prevent code escaping.
 """
 
 import datetime
@@ -14,38 +15,18 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
     Render global filter controls in the Streamlit sidebar with executive presets
     and return a structured filter dictionary for SQL query compilation.
     """
-    # 1. System Architecture Telemetry Card
-    st.sidebar.markdown("""
-    <div class="sidebar-telemetry-box">
-        <div class="telemetry-title">
-            <span class="telemetry-dot"></span> WAREHOUSE TELEMETRY
-        </div>
-        <div class="telemetry-item">
-            <span class="telemetry-lbl">Cluster</span>
-            <span class="telemetry-val">Supabase PostgreSQL 17</span>
-        </div>
-        <div class="telemetry-item">
-            <span class="telemetry-lbl">Policy</span>
-            <span class="telemetry-val">30-Day Rolling Retention</span>
-        </div>
-        <div class="telemetry-item">
-            <span class="telemetry-lbl">Security</span>
-            <span class="telemetry-val">AST Read-Only Enforced</span>
-        </div>
-        <div class="telemetry-storage-track">
-            <div class="telemetry-storage-label">
-                <span>Free Tier Quota</span>
-                <span class="telemetry-storage-pct">32.2% (161 / 500 MB)</span>
-            </div>
-            <div class="telemetry-storage-bar">
-                <div class="telemetry-storage-fill" style="width: 32.2%;"></div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # 1. Sidebar Brand Header
+    st.sidebar.markdown("### NYC 311 Operations")
+    st.sidebar.caption("Continuous Municipal Analytics & Warehouse Monitor")
 
-    st.sidebar.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
-    st.sidebar.markdown("<div style='font-size: 1.05rem; font-weight: 800; color: #FFFFFF; margin-bottom: 8px;'>🔍 Analytical Filters</div>", unsafe_allow_html=True)
+    # 2. System Status & Warehouse Telemetry Container
+    with st.sidebar.container(border=True):
+        st.markdown("**Warehouse Status**")
+        st.caption("PostgreSQL 17 · 30-Day Rolling Policy")
+        st.progress(0.322, text="Storage: 161 MB / 500 MB (32%)")
+
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("**Global Filters**")
 
     # Initialize session state for filter widgets if not present
     if "filter_date_range_picker" not in st.session_state:
@@ -60,7 +41,7 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
         st.session_state["filter_statuses_widget"] = []
 
     # Quick Date Range Presets
-    st.sidebar.markdown("<div style='font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; color: #818CF8; margin-bottom: 6px;'>DATE WINDOW PRESETS</div>", unsafe_allow_html=True)
+    st.sidebar.caption("Date Window Presets")
     p_col1, p_col2, p_col3 = st.sidebar.columns(3)
     max_d = filter_options["max_date"]
 
@@ -81,10 +62,10 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
             st.session_state["filter_date_range_picker"] = (d_7, max_d)
             st.rerun()
 
-    # Reset button & filter counter header
+    # Reset button & active filter counter
     col_reset, col_count = st.sidebar.columns([1, 1])
     with col_reset:
-        if st.button("🔄 Reset All", use_container_width=True, help="Reset all filters to full NYC dataset"):
+        if st.button("Reset All", use_container_width=True, help="Reset all filters to full NYC dataset"):
             st.session_state["filter_date_range_picker"] = (filter_options["min_date"], filter_options["max_date"])
             st.session_state["filter_boroughs_widget"] = []
             st.session_state["filter_agencies_widget"] = []
@@ -94,7 +75,7 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
 
     # 1. Date Range
     date_val = st.sidebar.date_input(
-        "📅 Custom Date Range",
+        "Date Range",
         min_value=filter_options["min_date"],
         max_value=filter_options["max_date"],
         key="filter_date_range_picker",
@@ -116,7 +97,7 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
 
     # 2. Borough Filter
     selected_boroughs = st.sidebar.multiselect(
-        "🏙️ Borough",
+        "Borough",
         options=filter_options["boroughs"],
         key="filter_boroughs_widget",
         placeholder="All Boroughs"
@@ -124,23 +105,23 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
 
     # 3. Agency Filter
     selected_agencies = st.sidebar.multiselect(
-        "🏢 Responding Agency",
+        "Responding Agency",
         options=filter_options["agencies"],
         key="filter_agencies_widget",
-        placeholder="All Responding Agencies"
+        placeholder="All Agencies"
     )
 
     # 4. Complaint Category Filter
     selected_categories = st.sidebar.multiselect(
-        "🏷️ Complaint Category",
+        "Complaint Category",
         options=filter_options["categories"],
         key="filter_categories_widget",
-        placeholder="All Complaint Categories"
+        placeholder="All Categories"
     )
 
     # 5. Status Filter
     selected_statuses = st.sidebar.multiselect(
-        "📌 Ticket Status",
+        "Ticket Status",
         options=filter_options["statuses"],
         key="filter_statuses_widget",
         placeholder="All Statuses"
@@ -161,11 +142,11 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
 
     with col_count:
         if active_filters > 0:
-            st.markdown(f"<div class='active-filter-pill'>⚡ {active_filters} Active Filter(s)</div>", unsafe_allow_html=True)
+            st.caption(f"⚡ **{active_filters} Active Filter(s)**")
         else:
-            st.markdown("<div class='all-data-pill'>● Full NYC Scope</div>", unsafe_allow_html=True)
+            st.caption("Showing All NYC Data")
 
-    st.sidebar.divider()
+    st.sidebar.markdown("---")
 
     return {
         "date_range": selected_date_range,

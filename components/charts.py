@@ -259,9 +259,9 @@ def render_geographic_charts(
     - Tab 3: Geospatial Density Map (Carto-Darkmatter / OpenStreetMap)
     """
     tab_borough, tab_zip, tab_map = st.tabs([
-        "🏙️ Borough Comparison",
-        "📮 Top Incident Zip Codes",
-        "🗺️ Geospatial Density Map"
+        "Borough Comparison",
+        "Top Incident Zip Codes",
+        "Geospatial Density Map"
     ])
 
     with tab_borough:
