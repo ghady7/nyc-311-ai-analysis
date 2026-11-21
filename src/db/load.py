@@ -246,6 +246,14 @@ def load_star_schema():
     print("GATE 3 WAREHOUSE LOAD COMPLETE", flush=True)
     print("=" * 70, flush=True)
 
+    # 7. Post-Load Rolling Retention Cleanup & Space Reclamation
+    if total_facts > 0:
+        retention_days = int(os.getenv("RETENTION_DAYS") or "30")
+        from src.etl.retention import enforce_rolling_retention
+        enforce_rolling_retention(retention_days=retention_days, min_ingested_rows=total_facts)
+    else:
+        print("SKIPPING RETENTION: Zero fact rows ingested; aborting prune to prevent data loss.", flush=True)
+
 
 if __name__ == "__main__":
     load_star_schema()
