@@ -49,7 +49,7 @@ def profile_gate1(raw_file_path: str = None):
     FROM read_ndjson('{normalized_path}');
     """
     print("--- 2. PRIMARY KEY UNIQUENESS ---")
-    print(con.execute(pk_sql).df().to_markdown(index=False))
+    print(con.execute(pk_sql).df().to_string(index=False))
     print()
 
     # 3. Date Boundaries
@@ -65,7 +65,7 @@ def profile_gate1(raw_file_path: str = None):
     FROM read_ndjson('{normalized_path}');
     """
     print("--- 3. DATE BOUNDARIES & CHRONOLOGY ---")
-    print(con.execute(date_sql).df().to_markdown(index=False))
+    print(con.execute(date_sql).df().to_string(index=False))
     print()
 
     # 4. Quarantine Candidates Summary
@@ -81,7 +81,7 @@ def profile_gate1(raw_file_path: str = None):
        OR (incident_zip IS NOT NULL AND (TRY_CAST(TRIM(incident_zip) AS INTEGER) < 10001 OR TRY_CAST(TRIM(incident_zip) AS INTEGER) > 11697));
     """
     print("--- 4. QUARANTINE CANDIDATE SUMMARY ---")
-    print(con.execute(q_sql).df().to_markdown(index=False))
+    print(con.execute(q_sql).df().to_string(index=False))
     print()
 
 

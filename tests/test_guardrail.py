@@ -1,16 +1,19 @@
 """
 Adversarial SQL Injection & Guardrail Test Suite
 Verifies 100% rejection rate for DDL, DML, administrative commands,
-statement chaining, and system catalog exfiltration attempts.
+statement chaining, schema boundary exfiltration, and DoS routines.
 """
 
 import pytest
+import pandas as pd
 from src.chatbot.guardrail import (
     sanitize_and_guard_query,
+    strip_sql_comments,
     SecurityViolationError,
     enforce_read_only_ast,
     enforce_limit_clause
 )
+from src.chatbot.visualizer import sanitize_df_for_altair, classify_columns
 
 
 class TestSQLGuardrailSecurity:
@@ -48,6 +51,12 @@ class TestSQLGuardrailSecurity:
         res = sanitize_and_guard_query(sql)
         assert res.startswith("SELECT")
         assert res.endswith("LIMIT 100")
+
+    def test_comment_in_string_literal_preserved(self):
+        sql = "SELECT * FROM fact_complaints WHERE incident_address = '123 Main St -- Apt 4'"
+        clean = strip_sql_comments(sql)
+        assert "-- Apt 4" in clean
+        assert clean == sql
 
     # --- ADVERSARIAL ATTACK TESTS ---
 
@@ -97,12 +106,47 @@ class TestSQLGuardrailSecurity:
 
     def test_reject_pg_shadow_exfiltration(self):
         sql = "SELECT usename, passwd FROM pg_shadow"
-        with pytest.raises(SecurityViolationError, match="Access to sensitive system catalog 'pg_shadow'"):
+        with pytest.raises(SecurityViolationError):
             sanitize_and_guard_query(sql)
 
     def test_reject_pg_authid_exfiltration(self):
         sql = "SELECT * FROM pg_authid"
-        with pytest.raises(SecurityViolationError, match="Access to sensitive system catalog 'pg_authid'"):
+        with pytest.raises(SecurityViolationError):
+            sanitize_and_guard_query(sql)
+
+    def test_reject_auth_users_exfiltration(self):
+        sql = "SELECT * FROM auth.users"
+        with pytest.raises(SecurityViolationError, match="Access to internal/administrative schema 'auth'"):
+            sanitize_and_guard_query(sql)
+
+    def test_reject_vault_secrets_exfiltration(self):
+        sql = "SELECT * FROM vault.decrypted_secrets"
+        with pytest.raises(SecurityViolationError, match="Access to internal/administrative schema 'vault'"):
+            sanitize_and_guard_query(sql)
+
+    def test_reject_storage_objects_exfiltration(self):
+        sql = "SELECT * FROM storage.objects"
+        with pytest.raises(SecurityViolationError, match="Access to internal/administrative schema 'storage'"):
+            sanitize_and_guard_query(sql)
+
+    def test_reject_pg_sleep_dos(self):
+        sql = "SELECT pg_sleep(30)"
+        with pytest.raises(SecurityViolationError, match="Prohibited keyword 'PG_SLEEP'"):
+            sanitize_and_guard_query(sql)
+
+    def test_reject_pg_terminate_backend(self):
+        sql = "SELECT pg_terminate_backend(1234)"
+        with pytest.raises(SecurityViolationError, match="Prohibited keyword 'PG_TERMINATE_BACKEND'"):
+            sanitize_and_guard_query(sql)
+
+    def test_reject_recursive_cte(self):
+        sql = "WITH RECURSIVE bomb AS (SELECT 1 UNION ALL SELECT * FROM bomb) SELECT * FROM bomb"
+        with pytest.raises(SecurityViolationError, match="Recursive CTEs"):
+            sanitize_and_guard_query(sql)
+
+    def test_reject_unauthorized_table(self):
+        sql = "SELECT * FROM customer_credit_cards"
+        with pytest.raises(SecurityViolationError, match="Access to unauthorized table 'customer_credit_cards'"):
             sanitize_and_guard_query(sql)
 
     def test_reject_grant_privileges(self):
@@ -114,3 +158,21 @@ class TestSQLGuardrailSecurity:
         sql = "SELECT * FROM fact_complaints WHERE unique_key IN (DELETE FROM dim_agency RETURNING agency_code)"
         with pytest.raises(SecurityViolationError, match="Prohibited keyword 'DELETE'"):
             sanitize_and_guard_query(sql)
+
+
+class TestVisualizerRobustness:
+
+    def test_sanitize_df_special_characters(self):
+        df = pd.DataFrame({
+            "avg(hours)": [10.5, 12.0],
+            "agency.name": ["NYPD", "HPD"],
+            "col with space": [1, 2]
+        })
+        clean_df, mapping = sanitize_df_for_altair(df)
+        for col in clean_df.columns:
+            assert "." not in col
+            assert "(" not in col
+            assert ")" not in col
+            assert " " not in col
+        assert mapping["avg_hours_"] == "avg(hours)"
+        assert mapping["agency_name"] == "agency.name"

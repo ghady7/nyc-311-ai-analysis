@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 
 from src.chatbot.agent import ask_analytics_agent, execute_guarded_query
 from src.chatbot.guardrail import SecurityViolationError
+from src.chatbot.visualizer import render_auto_visualization
 
 load_dotenv()
 
@@ -45,6 +46,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Initialize Session State
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if "gemini_api_key" not in st.session_state:
+    st.session_state.gemini_api_key = os.getenv("GEMINI_API_KEY", "")
+
 # Sidebar
 with st.sidebar:
     st.image("https://upload.wikimedia.org/wikipedia/commons/b/ba/Flag_of_New_York_City.svg", width=80)
@@ -54,14 +62,20 @@ with st.sidebar:
     st.markdown("🟢 **Model**: Gemini 2.5 Flash")
     st.markdown("🔒 **Guardrail**: Triple-Layer AST Active")
 
-    api_key_env = os.getenv("GEMINI_API_KEY")
-    if not api_key_env:
-        user_key = st.text_input("Gemini API Key", type="password", help="Enter key from Google AI Studio or set GEMINI_API_KEY in .env")
+    # Secure Session-Isolated API Key Input
+    if not st.session_state.gemini_api_key:
+        user_key = st.text_input(
+            "Gemini API Key",
+            type="password",
+            help="Enter key from Google AI Studio. Key remains isolated to your browser session."
+        )
         if user_key:
-            os.environ["GEMINI_API_KEY"] = user_key
-            st.success("API key loaded for session.")
+            st.session_state.gemini_api_key = user_key
+            st.success("API key loaded for this session.")
         else:
             st.info("💡 Set GEMINI_API_KEY in .env or enter above to enable natural language translation.")
+    else:
+        st.caption("🔑 Active Gemini API Key configured.")
 
     st.divider()
 
@@ -73,7 +87,7 @@ with st.sidebar:
         "How many complaints were quarantined and why?",
         "What is the average resolution time for Noise complaints in Manhattan?"
     ]
-    
+
     selected_sample = None
     for q in sample_queries:
         if st.button(q, key=f"btn_{hash(q)}", use_container_width=True):
@@ -82,10 +96,10 @@ with st.sidebar:
     st.divider()
     st.markdown("""
     **Security Guardrail Enforcement**:
-    - Prohibits DDL/DML mutation
-    - Rejects statement chaining (`;`)
-    - Auto-injects `LIMIT 100` cap
-    - Restricts to public schema read-only
+    - Whitelist table access (NYC 311 only)
+    - Prohibits DDL/DML & administrative routines
+    - Rejects statement chaining (`;`) & recursive CTEs
+    - Auto-injects `LIMIT 100` cap & 5s statement timeout
     """)
 
 # Header & KPIs
@@ -104,19 +118,23 @@ with col4:
 
 st.divider()
 
-# Chat History Session State
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-# Display past messages
-for msg in st.session_state.messages:
+# Display past messages with isolated widget keys
+for i, msg in enumerate(st.session_state.messages):
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
         if "sql" in msg:
             with st.expander("🔍 View Guarded SQL"):
                 st.code(msg["sql"], language="sql")
         if "data" in msg and msg["data"] is not None:
-            st.dataframe(msg["data"], use_container_width=True)
+            df = msg["data"]
+            if len(df) == 1:
+                render_auto_visualization(df, key_prefix=f"hist_{i}")
+            else:
+                tab_chart, tab_table = st.tabs(["📊 Visualization", "📋 Data Table"])
+                with tab_chart:
+                    render_auto_visualization(df, key_prefix=f"hist_{i}")
+                with tab_table:
+                    st.dataframe(df, use_container_width=True)
 
 # Input handling
 user_input = st.chat_input("Enter analytical question (e.g. 'Show average resolution time by borough')...")
@@ -134,7 +152,8 @@ if user_input:
         with st.spinner("Analyzing schema and generating guarded SQL query..."):
             try:
                 # 1. Text-to-SQL + Guardrail
-                agent_res = ask_analytics_agent(user_input)
+                session_key = st.session_state.gemini_api_key or os.getenv("GEMINI_API_KEY")
+                agent_res = ask_analytics_agent(user_input, api_key=session_key)
                 guarded_sql = agent_res["guarded_sql"]
 
                 # 2. Execute via Supabase Read-Only RPC
@@ -150,9 +169,18 @@ if user_input:
                 with st.expander("🔍 Inspect Verified Read-Only SQL Query", expanded=False):
                     st.code(guarded_sql, language="sql")
 
+                current_msg_idx = len(st.session_state.messages)
                 if rows:
                     df = pd.DataFrame(rows)
-                    st.dataframe(df, use_container_width=True)
+                    if len(df) == 1:
+                        render_auto_visualization(df, key_prefix=f"live_{current_msg_idx}")
+                    else:
+                        tab_chart, tab_table = st.tabs(["📊 Visualization", "📋 Data Table"])
+                        with tab_chart:
+                            render_auto_visualization(df, key_prefix=f"live_{current_msg_idx}")
+                        with tab_table:
+                            st.dataframe(df, use_container_width=True)
+
                     st.session_state.messages.append({
                         "role": "assistant",
                         "content": response_text,
