@@ -16,20 +16,21 @@ from services.chatbot_service import (
     STARTER_QUESTIONS
 )
 
+# Unified Design System Color Tokens (Apple Frosted Glass & Vibrant Ocean Palette)
 PALETTE = {
-    "primary": "#6366F1",
-    "primary_light": "#818CF8",
-    "secondary": "#38BDF8",
-    "accent_orange": "#FBBF24",
-    "accent_green": "#34D399",
-    "accent_purple": "#A78BFA",
-    "surface_card": "#111827",
-    "slate_900": "#0F172A",
-    "slate_700": "#334155",
-    "slate_500": "#94A3B8",
-    "slate_200": "#E2E8F0",
-    "slate_100": "#F8FAFC",
-    "grid_color": "rgba(148, 163, 184, 0.10)"
+    "primary": "#0A84FF",         # Apple System Blue
+    "primary_light": "#64D2FF",   # Apple Cyan
+    "secondary": "#5E5CE6",       # Apple Indigo
+    "accent_orange": "#FF9F0A",   # Apple Amber
+    "accent_green": "#30D158",    # Apple Mint
+    "accent_purple": "#BF5AF2",   # Apple Violet
+    "surface_card": "rgba(14, 25, 48, 0.70)",
+    "slate_900": "#080E1E",       # Apple Midnight
+    "slate_700": "rgba(255, 255, 255, 0.18)",
+    "slate_500": "#98989D",       # Apple Muted Axis Labels
+    "slate_200": "#E5E5EA",       # Apple Primary Axis Labels
+    "slate_100": "#F5F5F7",       # Pure Apple Title Text
+    "grid_color": "rgba(255, 255, 255, 0.07)"
 }
 
 CHAT_PLOTLY_CONFIG = {
@@ -119,7 +120,7 @@ def render_chat_visualization(df: pd.DataFrame, key_prefix: str = "chat") -> Non
         )
 
     layout_args = dict(
-        font=dict(family="Plus Jakarta Sans, Inter, sans-serif", size=11.5, color=PALETTE["slate_500"]),
+        font=dict(family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Plus Jakarta Sans', sans-serif", size=11.5, color=PALETTE["slate_500"]),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
         margin=dict(l=36, r=24, t=28, b=36),
@@ -138,11 +139,11 @@ def render_chat_visualization(df: pd.DataFrame, key_prefix: str = "chat") -> Non
             automargin=True
         ),
         hoverlabel=dict(
-            bgcolor=PALETTE["slate_900"],
+            bgcolor="rgba(8, 16, 34, 0.94)",
             font_size=12,
-            font_family="Plus Jakarta Sans, sans-serif",
+            font_family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
             font_color=PALETTE["slate_100"],
-            bordercolor=PALETTE["slate_700"]
+            bordercolor="rgba(100, 210, 255, 0.35)"
         )
     )
 

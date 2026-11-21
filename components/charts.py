@@ -15,23 +15,23 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 
-# Unified Design System Color Tokens (Obsidian Slate + Indigo + Sky + Semantic Accents)
+# Unified Design System Color Tokens (Apple Frosted Glass & Vibrant Ocean Palette)
 PALETTE = {
-    "primary": "#6366F1",         # Electric Indigo
-    "primary_light": "#818CF8",   # Light Indigo
-    "secondary": "#38BDF8",       # Sky Cyan
-    "accent_orange": "#FBBF24",   # Warm Amber
-    "accent_green": "#34D399",    # Neon Emerald
-    "accent_red": "#F87171",      # Rose Red
-    "accent_purple": "#A78BFA",   # Violet
-    "surface_card": "#111827",    # Elevated Card Surface
-    "slate_900": "#0F172A",       # Deep Slate
-    "slate_700": "#334155",       # Slate 700
-    "slate_500": "#94A3B8",       # Muted Axis Labels (WCAG AA on #111827)
-    "slate_200": "#E2E8F0",       # Primary Axis Labels
-    "slate_100": "#F8FAFC",       # Pure Title Text
-    "grid_color": "rgba(148, 163, 184, 0.10)",
-    "zero_line": "rgba(148, 163, 184, 0.22)"
+    "primary": "#0A84FF",         # Apple System Blue
+    "primary_light": "#64D2FF",   # Apple Cyan / Ice Blue
+    "secondary": "#5E5CE6",       # Apple Indigo
+    "accent_orange": "#FF9F0A",   # Apple Amber
+    "accent_green": "#30D158",    # Apple Mint / Emerald
+    "accent_red": "#FF453A",      # Apple Coral / Rose
+    "accent_purple": "#BF5AF2",   # Apple Violet
+    "surface_card": "rgba(14, 25, 48, 0.70)", # Frosted Mirror Glass Surface
+    "slate_900": "#080E1E",       # Apple Midnight
+    "slate_700": "rgba(255, 255, 255, 0.18)",
+    "slate_500": "#98989D",       # Apple Muted Axis Labels
+    "slate_200": "#E5E5EA",       # Apple Primary Axis Labels
+    "slate_100": "#F5F5F7",       # Pure Apple Title Text
+    "grid_color": "rgba(255, 255, 255, 0.07)",
+    "zero_line": "rgba(255, 255, 255, 0.16)"
 }
 
 PLOTLY_CONFIG = {
@@ -43,7 +43,7 @@ PLOTLY_CONFIG = {
 
 CHART_LAYOUT_DEFAULTS = dict(
     font=dict(
-        family="Plus Jakarta Sans, Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+        family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Plus Jakarta Sans', sans-serif",
         size=11.5,
         color=PALETTE["slate_500"]
     ),
@@ -52,11 +52,11 @@ CHART_LAYOUT_DEFAULTS = dict(
     margin=dict(l=44, r=24, t=58, b=40),
     hovermode="closest",
     hoverlabel=dict(
-        bgcolor=PALETTE["slate_900"],
+        bgcolor="rgba(8, 16, 34, 0.94)",
         font_size=12,
-        font_family="Plus Jakarta Sans, Inter, sans-serif",
+        font_family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
         font_color=PALETTE["slate_100"],
-        bordercolor=PALETTE["slate_700"]
+        bordercolor="rgba(100, 210, 255, 0.35)"
     )
 )
 
@@ -80,8 +80,8 @@ def render_volume_trend_chart(df: pd.DataFrame) -> None:
             y=df["complaint_volume"],
             name="Daily Volume",
             marker=dict(
-                color="rgba(99, 102, 241, 0.72)",
-                line=dict(color=PALETTE["primary_light"], width=1)
+                color="rgba(10, 132, 255, 0.75)",
+                line=dict(color="rgba(100, 210, 255, 0.85)", width=1)
             ),
             hovertemplate="<b>%{x|%b %d, %Y}</b><br>Daily Volume: <b>%{y:,}</b><extra></extra>"
         )
@@ -416,8 +416,8 @@ def render_geographic_charts(
                     y=borough_df["total_complaints"],
                     name="Complaint Volume",
                     marker=dict(
-                        color="rgba(99, 102, 241, 0.80)",
-                        line=dict(color=PALETTE["primary_light"], width=1)
+                        color="rgba(10, 132, 255, 0.78)",
+                        line=dict(color="rgba(100, 210, 255, 0.85)", width=1)
                     ),
                     hovertemplate="<b>%{x}</b><br>Volume: <b>%{y:,}</b><extra></extra>"
                 ),
@@ -669,8 +669,8 @@ def render_operational_channels_chart(channel_df: pd.DataFrame, weekday_df: pd.D
                     y=weekday_df["total"],
                     name="Volume",
                     marker=dict(
-                        color="rgba(56, 189, 248, 0.78)",
-                        line=dict(color=PALETTE["secondary"], width=1)
+                        color="rgba(100, 210, 255, 0.78)",
+                        line=dict(color=PALETTE["primary_light"], width=1)
                     ),
                     hovertemplate="<b>%{x}</b><br>Volume: <b>%{y:,}</b><extra></extra>"
                 ),
