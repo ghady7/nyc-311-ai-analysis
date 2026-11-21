@@ -476,7 +476,11 @@ def main():
         filter_options = get_filter_options()
     except Exception as init_err:
         st.error(f"⚠️ Unable to connect to Supabase PostgreSQL: {init_err}")
-        st.info("Please verify SUPABASE_URL and SUPABASE_KEY in environment variables.")
+        col_btn, _ = st.columns([1, 4])
+        with col_btn:
+            if st.button("🔄 Retry Connection", help="Clear cache and re-query database"):
+                clear_dashboard_cache()
+                st.rerun()
         st.stop()
 
     # Format Last Synced Timestamp
