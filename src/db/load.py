@@ -124,7 +124,9 @@ def load_star_schema():
         strftime(CURRENT_TIMESTAMP, '%Y-%m-%dT%H:%M:%SZ') AS quarantined_at
     FROM read_parquet('{quarantine_path}');
     """)
-    post_batch("quarantine_complaints", q_records)
+    for i in range(0, len(q_records), 1000):
+        chunk = q_records[i : i + 1000]
+        post_batch("quarantine_complaints", chunk)
     print(f"-> Successfully loaded {len(q_records):,} quarantine records.\n", flush=True)
 
     # 2. Populate Dimension: dim_complaint_type
@@ -221,7 +223,11 @@ def load_star_schema():
     FROM read_parquet('{clean_path}') c
     LEFT JOIN map_agency a ON c.agency = a.agency_code
     LEFT JOIN map_complaint ct ON c.complaint_type = ct.complaint_type AND c.descriptor = ct.descriptor
-    LEFT JOIN map_location l ON c.borough = l.borough AND c.city = l.city AND c.incident_zip = l.incident_zip AND c.location_type = l.location_type;
+    LEFT JOIN map_location l ON c.borough = l.borough AND c.city = l.city AND c.incident_zip = l.incident_zip AND c.location_type = l.location_type
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY c.unique_key 
+        ORDER BY c.created_date DESC, c.closed_date DESC NULLS LAST
+    ) = 1;
     """)
 
     total_facts = con.execute("SELECT COUNT(*) FROM stage_facts;").fetchone()[0]
@@ -233,7 +239,7 @@ def load_star_schema():
     
     offset = 0
     while offset < total_facts:
-        batch_query = f"SELECT * FROM stage_facts LIMIT {BATCH_SIZE} OFFSET {offset};"
+        batch_query = f"SELECT * FROM stage_facts ORDER BY unique_key LIMIT {BATCH_SIZE} OFFSET {offset};"
         batch = query_to_dicts(con, batch_query)
         post_batch("fact_complaints", batch, on_conflict="unique_key")
         offset += len(batch)

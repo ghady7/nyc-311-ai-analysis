@@ -56,6 +56,21 @@ def run_transformation():
     SELECT 
         *,
         CASE 
+            WHEN unique_key IS NULL OR TRIM(unique_key) = ''
+                THEN 'NULL_PK'
+            WHEN ROW_NUMBER() OVER (
+                PARTITION BY unique_key 
+                ORDER BY 
+                    CASE 
+                        WHEN closed_date IS NOT NULL AND TRY_CAST(closed_date AS TIMESTAMP) < TRY_CAST(created_date AS TIMESTAMP) THEN 1
+                        WHEN borough IS NULL OR TRIM(borough) IN ('', 'Unspecified') THEN 1
+                        WHEN incident_zip IS NOT NULL AND (TRY_CAST(TRIM(incident_zip) AS INTEGER) < 10001 OR TRY_CAST(TRIM(incident_zip) AS INTEGER) > 11697) THEN 1
+                        ELSE 0 
+                    END ASC,
+                    TRY_CAST(created_date AS TIMESTAMP) DESC NULLS LAST,
+                    TRY_CAST(closed_date AS TIMESTAMP) DESC NULLS LAST
+            ) > 1 
+                THEN 'DUPLICATE_KEY'
             WHEN closed_date IS NOT NULL AND TRY_CAST(closed_date AS TIMESTAMP) < TRY_CAST(created_date AS TIMESTAMP) 
                 THEN 'CHRONOLOGY_VIOLATION'
             WHEN borough IS NULL OR TRIM(borough) IN ('', 'Unspecified') 
