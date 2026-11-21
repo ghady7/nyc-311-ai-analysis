@@ -41,67 +41,414 @@ load_dotenv()
 
 # Page Configuration
 st.set_page_config(
-    page_title="NYC 311 Executive Analytics & AI Copilot",
+    page_title="NYC 311 Municipal Operations Center & AI Copilot",
     page_icon="🗽",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom Executive Dashboard CSS
+# Custom Executive Enterprise Theme & Typography
 st.markdown("""
 <style>
-    /* Metric styling */
-    [data-testid="stMetric"] {
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    html, body, [class*="css"], .stApp {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: #0F172A;
         background-color: #F8FAFC;
-        border: 1px solid #E2E8F0;
-        border-radius: 8px;
-        padding: 12px 16px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
-    [data-testid="stMetricLabel"] {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: #4A5568;
-    }
-    [data-testid="stMetricValue"] {
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: #1A202C;
     }
 
-    /* Badges */
-    .status-badge {
+    /* Streamlit layout spacing cleanup */
+    .block-container {
+        padding-top: 1.5rem !important;
+        padding-bottom: 3rem !important;
+        max-width: 1440px !important;
+    }
+
+    /* Header Container */
+    .executive-header {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 14px;
+        padding: 20px 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+    }
+
+    .header-left {
+        flex: 1;
+        min-width: 320px;
+    }
+
+    .header-pretitle {
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        color: #4F46E5;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+
+    .header-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        color: #0F172A;
+        margin: 0;
+        line-height: 1.2;
+    }
+
+    .header-caption {
+        font-size: 0.85rem;
+        color: #64748B;
+        margin-top: 4px;
+        margin-bottom: 0;
+    }
+
+    /* Live Telemetry Capsule */
+    .telemetry-capsule {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .status-capsule-item {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background-color: #EDF2F7;
-        color: #2D3748;
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 0.8rem;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 0.78rem;
         font-weight: 600;
-        border: 1px solid #CBD5E0;
-    }
-    .status-badge-green {
-        background-color: #DEF7EC;
-        color: #03543F;
-        border-color: #84E1BC;
-    }
-    .status-badge-blue {
-        background-color: #EBF5FF;
-        color: #1E429F;
-        border-color: #A4CAFE;
+        background: #F1F5F9;
+        color: #334155;
+        border: 1px solid #E2E8F0;
     }
 
-    /* Tab headers */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
+    .capsule-live {
+        background: #ECFDF5;
+        color: #065F46;
+        border-color: #A7F3D0;
     }
-    .stTabs [data-baseweb="tab"] {
+
+    .capsule-blue {
+        background: #EEF2FF;
+        color: #3730A3;
+        border-color: #C7D2FE;
+    }
+
+    /* Pulsing Beacon */
+    .live-beacon {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #10B981;
+        box-shadow: 0 0 0 rgba(16, 185, 129, 0.4);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* KPI Grid & Cards */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .kpi-card {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 18px 20px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px -2px rgba(0, 0, 0, 0.06);
+        border-color: #CBD5E1;
+    }
+
+    .kpi-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .kpi-tag {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: #64748B;
+        text-transform: uppercase;
+    }
+
+    .kpi-icon-badge {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+    }
+
+    .badge-indigo { background: rgba(79, 70, 229, 0.1); color: #4F46E5; }
+    .badge-emerald { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+    .badge-sky { background: rgba(14, 165, 233, 0.1); color: #0EA5E9; }
+    .badge-amber { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+
+    .kpi-body {
+        margin-bottom: 10px;
+    }
+
+    .kpi-value {
+        font-size: 1.85rem;
+        font-weight: 800;
+        color: #0F172A;
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+    }
+
+    .kpi-unit {
+        font-size: 1.05rem;
         font-weight: 600;
+        color: #64748B;
+    }
+
+    .kpi-progress-track {
+        width: 100%;
+        height: 5px;
+        background: #F1F5F9;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+
+    .kpi-progress-fill {
+        height: 100%;
+        border-radius: 999px;
+        transition: width 0.4s ease;
+    }
+
+    .kpi-footer {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .kpi-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 999px;
+    }
+
+    .kpi-pill-success {
+        background-color: #ECFDF5;
+        color: #065F46;
+        border: 1px solid #A7F3D0;
+    }
+
+    .kpi-pill-danger {
+        background-color: #FEF2F2;
+        color: #991B1B;
+        border: 1px solid #FECACA;
+    }
+
+    .kpi-pill-neutral {
+        background-color: #F1F5F9;
+        color: #334155;
+        border: 1px solid #E2E8F0;
+    }
+
+    .kpi-context {
+        font-size: 0.76rem;
+        color: #64748B;
+        font-weight: 500;
+    }
+
+    /* Plotly Chart Card Styling */
+    [data-testid="stPlotlyChart"] {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 12px 14px 6px 14px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    /* Streamlit Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+        background-color: transparent;
+        border-bottom: 2px solid #E2E8F0;
+        padding-bottom: 2px;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        font-weight: 700;
         font-size: 0.95rem;
-        padding: 8px 16px;
-        border-radius: 6px 6px 0 0;
+        padding: 10px 18px;
+        border-radius: 8px 8px 0 0;
+        color: #64748B;
+    }
+
+    .stTabs [aria-selected="true"] {
+        color: #4F46E5 !important;
+        border-bottom: 2px solid #4F46E5 !important;
+        background-color: rgba(79, 70, 229, 0.04);
+    }
+
+    /* Sidebar Telemetry Card */
+    .sidebar-telemetry-box {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 10px;
+        padding: 14px 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    .telemetry-title {
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: #4F46E5;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 10px;
+    }
+
+    .telemetry-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #10B981;
+    }
+
+    .telemetry-item {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.78rem;
+        margin-bottom: 6px;
+    }
+
+    .telemetry-lbl {
+        color: #64748B;
+        font-weight: 500;
+    }
+
+    .telemetry-val {
+        color: #0F172A;
+        font-weight: 600;
+    }
+
+    .telemetry-storage-track {
+        margin-top: 10px;
+        padding-top: 8px;
+        border-top: 1px solid #F1F5F9;
+    }
+
+    .telemetry-storage-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.72rem;
+        color: #64748B;
+        margin-bottom: 4px;
+    }
+
+    .telemetry-storage-pct {
+        font-weight: 700;
+        color: #0F172A;
+    }
+
+    .telemetry-storage-bar {
+        width: 100%;
+        height: 5px;
+        background: #F1F5F9;
+        border-radius: 999px;
+        overflow: hidden;
+    }
+
+    .telemetry-storage-fill {
+        height: 100%;
+        background: #4F46E5;
+        border-radius: 999px;
+    }
+
+    .active-filter-pill {
+        display: inline-block;
+        padding: 3px 8px;
+        background: #EEF2FF;
+        color: #4F46E5;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        border: 1px solid #C7D2FE;
+    }
+
+    .all-data-pill {
+        display: inline-block;
+        padding: 3px 8px;
+        background: #F1F5F9;
+        color: #64748B;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    /* Copilot Hero Banner */
+    .copilot-hero-banner {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .copilot-badge {
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        color: #4F46E5;
+        margin-bottom: 4px;
+    }
+
+    .copilot-title {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #0F172A;
+        margin-bottom: 6px;
+    }
+
+    .copilot-desc {
+        font-size: 0.86rem;
+        color: #64748B;
+        line-height: 1.5;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -136,7 +483,6 @@ def main():
     last_synced_raw = freshness.get("last_synced_at")
     if last_synced_raw:
         try:
-            # Parse ISO timestamp and format cleanly
             clean_ts = str(last_synced_raw).replace("Z", "+00:00")
             dt_synced = datetime.datetime.fromisoformat(clean_ts)
             formatted_synced = dt_synced.strftime("%b %d, %Y %H:%M UTC")
@@ -148,37 +494,48 @@ def main():
     total_records = int(freshness.get("total_fact_records") or 0)
     pass_rate = float(freshness.get("data_quality_pass_rate") if freshness.get("data_quality_pass_rate") is not None else 100.0)
 
-    # 2. Top Header & Synchronization Bar
-    head_col1, head_col2 = st.columns([3, 2])
-    with head_col1:
-        st.title("🗽 NYC 311 Executive Analytics & AI Copilot")
-        st.caption("Live municipal service requests, response times, and automated natural language analytics.")
+    # 2. Top Executive Header & Telemetry Control Deck
+    header_html = f"""
+    <div class="executive-header">
+        <div class="header-left">
+            <div class="header-pretitle">THE CITY OF NEW YORK · EXECUTIVE OPERATIONS CENTER</div>
+            <h1 class="header-title">NYC 311 Municipal Analytics & Copilot</h1>
+            <p class="header-caption">Continuous real-time monitoring of civic requests, SLA resolution performance, and natural language analytics.</p>
+        </div>
+        <div class="telemetry-capsule">
+            <div class="status-capsule-item capsule-live" title="Automated daily ETL is active">
+                <span class="live-beacon"></span> LIVE WAREHOUSE
+            </div>
+            <div class="status-capsule-item capsule-blue" title="Timestamp of last automated ETL run">
+                🔄 Synced: {formatted_synced}
+            </div>
+            <div class="status-capsule-item" title="Clean records / (Clean + Quarantined)">
+                🛡️ {pass_rate:.1f}% Quality
+            </div>
+            <div class="status-capsule-item" title="Total active fact records">
+                📦 {total_records:,} Records
+            </div>
+        </div>
+    </div>
+    """
+    st.markdown(header_html, unsafe_allow_html=True)
 
-    with head_col2:
-        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-        b_col1, b_col2, b_col3 = st.columns([1.8, 1.2, 1.0])
-        with b_col1:
-            st.markdown(
-                f"<div class='status-badge status-badge-blue' title='Timestamp of last automated ETL run'>🔄 Last Synced: {formatted_synced}</div>",
-                unsafe_allow_html=True
-            )
-        with b_col2:
-            st.markdown(
-                f"<div class='status-badge status-badge-green' title='Clean records / (Clean + Quarantined)'>🛡️ {pass_rate:.1f}% Pass</div>",
-                unsafe_allow_html=True
-            )
-        with b_col3:
-            if st.button("🔄 Refresh", help="Invalidate cache and query latest PostgreSQL data"):
-                clear_dashboard_cache()
-                st.rerun()
-
-    # 3. Sidebar Filters & Environment Information
+    # 3. Sidebar Filters & System Architecture
     with st.sidebar:
-        st.image("https://upload.wikimedia.org/wikipedia/commons/b/ba/Flag_of_New_York_City.svg", width=65)
-        st.markdown("### System Architecture")
-        st.markdown("🟢 **Warehouse**: Supabase PostgreSQL 17")
-        st.markdown(f"📦 **Fact Complaints**: {total_records:,} rows")
-        st.markdown("🔒 **Security**: AST Read-Only Guardrail Active")
+        st.markdown("""
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <div style="font-size: 1.8rem;">🗽</div>
+            <div>
+                <div style="font-size: 0.95rem; font-weight: 800; color: #0F172A; line-height: 1.2;">NYC 311 OPS</div>
+                <div style="font-size: 0.72rem; color: #64748B; font-weight: 600;">Intelligence Platform</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("🔄 Sync / Invalidate Cache", use_container_width=True, help="Force refresh latest data from Supabase"):
+            clear_dashboard_cache()
+            st.rerun()
+
         st.divider()
 
     filters = render_sidebar_filters(filter_options)
@@ -203,7 +560,7 @@ def main():
         # Top Executive KPI Cards Row
         render_executive_kpis(kpis)
 
-        st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
         # Row 1: Volume Trend & Operational Channel Distribution
         col_trend, col_ops = st.columns([3, 2])
@@ -215,7 +572,7 @@ def main():
                 channel_data["weekday_vs_weekend"]
             )
 
-        st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
         # Row 2: Top Complaint Types & Agency Performance Matrix
         col_types, col_matrix = st.columns([1, 1])
@@ -224,7 +581,7 @@ def main():
         with col_matrix:
             render_agency_performance_matrix(agency_df)
 
-        st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
         # Row 3: Geographic Breakdown (Boroughs, Zip codes, and Density Map)
         render_geographic_charts(

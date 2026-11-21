@@ -17,11 +17,14 @@ from services.chatbot_service import (
 )
 
 PALETTE = {
-    "primary": "#1F497D",
-    "secondary": "#2B6CB0",
-    "accent_orange": "#DD6B20",
-    "accent_green": "#2F855A",
-    "grid_color": "#E2E8F0"
+    "primary": "#4F46E5",
+    "secondary": "#0EA5E9",
+    "accent_orange": "#F59E0B",
+    "accent_green": "#10B981",
+    "accent_purple": "#8B5CF6",
+    "slate_900": "#0F172A",
+    "slate_500": "#64748B",
+    "grid_color": "#F1F5F9"
 }
 
 
@@ -71,7 +74,7 @@ def render_chat_visualization(df: pd.DataFrame, key_prefix: str = "chat") -> Non
 
     date_cols, cat_cols, num_cols = _classify_chat_columns(df)
 
-    # If no numeric metrics to plot, skip charting
+    # If no numeric metrics to plot, render table directly
     if not num_cols:
         st.dataframe(df, use_container_width=True)
         return
@@ -92,7 +95,7 @@ def render_chat_visualization(df: pd.DataFrame, key_prefix: str = "chat") -> Non
 
     x_label = str(x_col).replace("_", " ").title()
 
-    # Chart selector
+    # Visual Format Selector
     col_type, _ = st.columns([2, 4])
     with col_type:
         chart_choice = st.selectbox(
@@ -104,12 +107,18 @@ def render_chat_visualization(df: pd.DataFrame, key_prefix: str = "chat") -> Non
         )
 
     layout_args = dict(
-        font=dict(family="sans-serif", size=12),
+        font=dict(family="Plus Jakarta Sans, Inter, sans-serif", size=11, color=PALETTE["slate_500"]),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
         margin=dict(l=30, r=20, t=30, b=30),
-        xaxis=dict(showgrid=True, gridcolor=PALETTE["grid_color"]),
-        yaxis=dict(showgrid=True, gridcolor=PALETTE["grid_color"])
+        xaxis=dict(showgrid=True, gridcolor=PALETTE["grid_color"], tickfont=dict(size=10)),
+        yaxis=dict(showgrid=True, gridcolor=PALETTE["grid_color"], tickfont=dict(size=10)),
+        hoverlabel=dict(
+            bgcolor=PALETTE["slate_900"],
+            font_size=12,
+            font_family="Plus Jakarta Sans, sans-serif",
+            font_color="#F8FAFC"
+        )
     )
 
     if chart_choice == "Bar Chart":
@@ -123,6 +132,7 @@ def render_chat_visualization(df: pd.DataFrame, key_prefix: str = "chat") -> Non
             labels={metric_col: metric_label, x_col: x_label}
         )
         fig.update_layout(**layout_args, height=max(260, min(500, len(plot_df) * 28)))
+        fig.update_traces(hovertemplate="<b>%{y}</b>: %{x:,}<extra></extra>")
         st.plotly_chart(fig, use_container_width=True)
 
     elif chart_choice == "Line Chart":
@@ -135,6 +145,11 @@ def render_chat_visualization(df: pd.DataFrame, key_prefix: str = "chat") -> Non
             labels={metric_col: metric_label, x_col: x_label}
         )
         fig.update_layout(**layout_args, height=350)
+        fig.update_traces(
+            line=dict(width=2.5, shape="spline"),
+            marker=dict(size=6),
+            hovertemplate="<b>%{x}</b>: %{y:,}<extra></extra>"
+        )
         st.plotly_chart(fig, use_container_width=True)
 
     elif chart_choice == "Area Chart":
@@ -146,6 +161,7 @@ def render_chat_visualization(df: pd.DataFrame, key_prefix: str = "chat") -> Non
             labels={metric_col: metric_label, x_col: x_label}
         )
         fig.update_layout(**layout_args, height=350)
+        fig.update_traces(hovertemplate="<b>%{x}</b>: %{y:,}<extra></extra>")
         st.plotly_chart(fig, use_container_width=True)
 
 
@@ -156,8 +172,15 @@ def render_copilot_chat() -> None:
     - Chat turn history with SQL inspection, auto-visualization, and CSV download
     - Real-time natural language query execution with AST safety
     """
-    st.markdown("### 🤖 NYC 311 AI Data Analyst Copilot")
-    st.caption("Ask questions in natural language. Powered by Gemini 2.5 Flash, translated to PostgreSQL, and verified by AST guardrails.")
+    st.markdown("""
+    <div class="copilot-hero-banner">
+        <div class="copilot-badge">🤖 GEMINI 2.5 FLASH + SUPABASE POSTGRESQL 17</div>
+        <div class="copilot-title">Executive AI Data Analyst Copilot</div>
+        <div class="copilot-desc">
+            Inquire in natural language. Queries are parsed and translated to SQL against the verified Star Schema warehouse, verified against read-only AST guardrails, and visualized instantly.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Initialize chat message history
     if "copilot_messages" not in st.session_state:
@@ -179,22 +202,24 @@ def render_copilot_chat() -> None:
             api_key = st.session_state.get("session_gemini_key")
 
     # Clickable Starter Questions
-    st.markdown("**Suggested Analytical Inquiries:**")
+    st.markdown("<div style='font-size: 0.8rem; font-weight: 700; color: #64748B; margin-top: 10px; margin-bottom: 6px;'>SUGGESTED ANALYTICAL INQUIRIES</div>", unsafe_allow_html=True)
     clicked_question: Optional[str] = None
     cols = st.columns(2)
+    icons = ["📈", "🏢", "🏙️", "🛡️"]
     for idx, q_text in enumerate(STARTER_QUESTIONS):
         with cols[idx % 2]:
-            if st.button(f"💡 {q_text}", key=f"starter_q_{idx}", use_container_width=True):
+            icon = icons[idx % len(icons)]
+            if st.button(f"{icon} {q_text}", key=f"starter_q_{idx}", use_container_width=True):
                 clicked_question = q_text
 
-    st.divider()
+    st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
     # Render previous conversation history
     for i, msg in enumerate(st.session_state.copilot_messages):
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
             if msg.get("guarded_sql"):
-                with st.expander("🔍 Inspect Guarded SQL Query"):
+                with st.expander("🔍 Inspect Verified SQL Query"):
                     st.code(msg["guarded_sql"], language="sql")
             df = msg.get("df")
             if df is not None and not df.empty:
@@ -205,7 +230,7 @@ def render_copilot_chat() -> None:
                     st.dataframe(df, use_container_width=True)
                     csv_bytes = df.to_csv(index=False).encode("utf-8")
                     st.download_button(
-                        label="📥 Download CSV",
+                        label="📥 Download CSV Dataset",
                         data=csv_bytes,
                         file_name=f"nyc311_query_result_{i}.csv",
                         mime="text/csv",
@@ -213,7 +238,7 @@ def render_copilot_chat() -> None:
                     )
 
     # Input Box handling
-    chat_prompt = st.chat_input("Ask a question (e.g. 'Show top 5 noise complaints by borough')...")
+    chat_prompt = st.chat_input("Ask an analytical question (e.g. 'Show top 5 noise complaints by borough')...")
     active_prompt = clicked_question or chat_prompt
 
     if active_prompt:
@@ -234,7 +259,7 @@ def render_copilot_chat() -> None:
                 if result["success"]:
                     st.markdown(result["summary"])
                     if result["guarded_sql"]:
-                        with st.expander("🔍 Inspect Guarded SQL Query"):
+                        with st.expander("🔍 Inspect Verified SQL Query"):
                             st.code(result["guarded_sql"], language="sql")
 
                     df = result["df"]
@@ -247,7 +272,7 @@ def render_copilot_chat() -> None:
                             st.dataframe(df, use_container_width=True)
                             csv_bytes = df.to_csv(index=False).encode("utf-8")
                             st.download_button(
-                                label="📥 Download CSV",
+                                label="📥 Download CSV Dataset",
                                 data=csv_bytes,
                                 file_name=f"nyc311_query_result_{current_idx}.csv",
                                 mime="text/csv",

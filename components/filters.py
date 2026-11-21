@@ -1,7 +1,7 @@
 """
 Sidebar Filter Controls for NYC 311 Executive Analytics.
 Provides reactive global filtering across Date Range, Borough, Agency,
-Complaint Category, and Ticket Status with instant reset capability.
+Complaint Category, and Ticket Status with quick presets and instant reset capability.
 """
 
 import datetime
@@ -11,11 +11,41 @@ import streamlit as st
 
 def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Render global filter controls in the Streamlit sidebar and return
-    a structured filter dictionary for SQL query compilation.
+    Render global filter controls in the Streamlit sidebar with executive presets
+    and return a structured filter dictionary for SQL query compilation.
     """
-    st.sidebar.markdown("## 🔍 Global Filters")
-    st.sidebar.caption("Filter all KPIs and visual analytics dynamically.")
+    # 1. System Architecture Telemetry Card
+    st.sidebar.markdown("""
+    <div class="sidebar-telemetry-box">
+        <div class="telemetry-title">
+            <span class="telemetry-dot"></span> WAREHOUSE TELEMETRY
+        </div>
+        <div class="telemetry-item">
+            <span class="telemetry-lbl">Cluster</span>
+            <span class="telemetry-val">Supabase PostgreSQL 17</span>
+        </div>
+        <div class="telemetry-item">
+            <span class="telemetry-lbl">Policy</span>
+            <span class="telemetry-val">30-Day Rolling Retention</span>
+        </div>
+        <div class="telemetry-item">
+            <span class="telemetry-lbl">Security</span>
+            <span class="telemetry-val">AST Read-Only Enforced</span>
+        </div>
+        <div class="telemetry-storage-track">
+            <div class="telemetry-storage-label">
+                <span>Free Tier Quota</span>
+                <span class="telemetry-storage-pct">32.2% (161 / 500 MB)</span>
+            </div>
+            <div class="telemetry-storage-bar">
+                <div class="telemetry-storage-fill" style="width: 32.2%;"></div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.sidebar.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+    st.sidebar.markdown("### 🔍 Global Analytical Filters")
 
     # Initialize session state for filter widgets if not present
     if "filter_date_range_picker" not in st.session_state:
@@ -29,10 +59,32 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
     if "filter_statuses_widget" not in st.session_state:
         st.session_state["filter_statuses_widget"] = []
 
-    # Reset button
+    # Quick Date Range Presets
+    st.sidebar.markdown("<span style='font-size: 0.75rem; font-weight: 700; color: #64748B;'>DATE PRESETS</span>", unsafe_allow_html=True)
+    p_col1, p_col2, p_col3 = st.sidebar.columns(3)
+    max_d = filter_options["max_date"]
+
+    with p_col1:
+        if st.button("All Days", key="preset_all", use_container_width=True, help="Full available 30-day window"):
+            st.session_state["filter_date_range_picker"] = (filter_options["min_date"], filter_options["max_date"])
+            st.rerun()
+
+    with p_col2:
+        if st.button("Last 14D", key="preset_14d", use_container_width=True, help="Last 14 calendar days"):
+            d_14 = max(filter_options["min_date"], max_d - datetime.timedelta(days=14))
+            st.session_state["filter_date_range_picker"] = (d_14, max_d)
+            st.rerun()
+
+    with p_col3:
+        if st.button("Last 7D", key="preset_7d", use_container_width=True, help="Last 7 calendar days"):
+            d_7 = max(filter_options["min_date"], max_d - datetime.timedelta(days=7))
+            st.session_state["filter_date_range_picker"] = (d_7, max_d)
+            st.rerun()
+
+    # Reset button & filter counter header
     col_reset, col_count = st.sidebar.columns([1, 1])
     with col_reset:
-        if st.button("🔄 Reset All", use_container_width=True):
+        if st.button("🔄 Reset All", use_container_width=True, help="Reset all filters to full NYC dataset"):
             st.session_state["filter_date_range_picker"] = (filter_options["min_date"], filter_options["max_date"])
             st.session_state["filter_boroughs_widget"] = []
             st.session_state["filter_agencies_widget"] = []
@@ -42,7 +94,7 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
 
     # 1. Date Range
     date_val = st.sidebar.date_input(
-        "📅 Date Range",
+        "📅 Custom Date Range",
         min_value=filter_options["min_date"],
         max_value=filter_options["max_date"],
         key="filter_date_range_picker",
@@ -75,7 +127,7 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
         "🏢 Responding Agency",
         options=filter_options["agencies"],
         key="filter_agencies_widget",
-        placeholder="All Agencies"
+        placeholder="All Responding Agencies"
     )
 
     # 4. Complaint Category Filter
@@ -83,7 +135,7 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
         "🏷️ Complaint Category",
         options=filter_options["categories"],
         key="filter_categories_widget",
-        placeholder="All Categories"
+        placeholder="All Complaint Categories"
     )
 
     # 5. Status Filter
@@ -109,9 +161,9 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
 
     with col_count:
         if active_filters > 0:
-            st.markdown(f"<span style='color: #2b6cb0; font-weight: 600; font-size: 0.85rem;'>⚡ {active_filters} active filter(s)</span>", unsafe_allow_html=True)
+            st.markdown(f"<div class='active-filter-pill'>⚡ {active_filters} Active Filter(s)</div>", unsafe_allow_html=True)
         else:
-            st.markdown("<span style='color: #718096; font-size: 0.85rem;'>All NYC Data</span>", unsafe_allow_html=True)
+            st.markdown("<div class='all-data-pill'>● Full NYC Scope</div>", unsafe_allow_html=True)
 
     st.sidebar.divider()
 
