@@ -31,7 +31,7 @@ def render_executive_kpis(kpis: Dict[str, Any]) -> None:
     avg_hours = float(kpis.get("avg_resolution_hours") or 0.0)
     hours_delta = float(kpis.get("resolution_hours_delta") or 0.0)
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4 = st.columns(4, gap="medium")
 
     with col1:
         st.metric(
@@ -46,7 +46,7 @@ def render_executive_kpis(kpis: Dict[str, Any]) -> None:
         st.metric(
             label="Resolution Rate",
             value=f"{closure_rate:.1f}%",
-            delta=f"{closure_delta:+.1f}% pt vs prior",
+            delta=f"{closure_delta:+.1f} pp vs prior",
             delta_color="normal",
             help="Percentage of tickets with status 'Closed' (is_closed = true)."
         )
@@ -55,7 +55,7 @@ def render_executive_kpis(kpis: Dict[str, Any]) -> None:
         st.metric(
             label="SLA Compliance Rate",
             value=f"{sla_rate:.1f}%",
-            delta=f"{sla_delta:+.1f}% pt vs prior",
+            delta=f"{sla_delta:+.1f} pp vs prior",
             delta_color="normal",
             help="Percentage of closed tickets resolved before SLA due timestamp."
         )
@@ -64,7 +64,7 @@ def render_executive_kpis(kpis: Dict[str, Any]) -> None:
         st.metric(
             label="Median Resolution Time",
             value=f"{median_hours:.1f} hrs",
-            delta=f"{hours_delta:+.1f} hrs vs prior (Mean: {avg_hours:.1f}h)",
+            delta=f"{hours_delta:+.1f}h vs prior",
             delta_color="inverse",
-            help="Median resolution time for closed tickets. Lower duration indicates faster municipal response."
+            help=f"Median resolution time for closed tickets. Lower duration indicates faster response (Mean: {avg_hours:.1f} hrs)."
         )

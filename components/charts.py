@@ -15,34 +15,48 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 
-# Color Palette: Modern Executive Dark Slate Theme (Midnight Slate + Electric Indigo + Neon Emerald + Warm Amber)
+# Unified Design System Color Tokens (Obsidian Slate + Indigo + Sky + Semantic Accents)
 PALETTE = {
-    "primary": "#6366F1",        # Electric Indigo
-    "primary_light": "#818CF8",  # Light Indigo
-    "secondary": "#38BDF8",      # Sky Cyan
-    "accent_orange": "#FBBF24",  # Warm Amber
-    "accent_green": "#34D399",   # Neon Emerald
-    "accent_red": "#F87171",     # Rose Red
-    "accent_purple": "#A78BFA",  # Violet
-    "slate_900": "#0F172A",      # Deep Slate
-    "slate_700": "#334155",      # Slate 700
-    "slate_500": "#94A3B8",      # Slate 500 (Muted Labels)
-    "slate_200": "#E2E8F0",      # Slate 200
-    "slate_100": "#F1F5F9",      # Slate 100
-    "grid_color": "rgba(255, 255, 255, 0.06)"  # Crisp Minimal Dark Gridline
+    "primary": "#6366F1",         # Electric Indigo
+    "primary_light": "#818CF8",   # Light Indigo
+    "secondary": "#38BDF8",       # Sky Cyan
+    "accent_orange": "#FBBF24",   # Warm Amber
+    "accent_green": "#34D399",    # Neon Emerald
+    "accent_red": "#F87171",      # Rose Red
+    "accent_purple": "#A78BFA",   # Violet
+    "surface_card": "#111827",    # Elevated Card Surface
+    "slate_900": "#0F172A",       # Deep Slate
+    "slate_700": "#334155",       # Slate 700
+    "slate_500": "#94A3B8",       # Muted Axis Labels (WCAG AA on #111827)
+    "slate_200": "#E2E8F0",       # Primary Axis Labels
+    "slate_100": "#F8FAFC",       # Pure Title Text
+    "grid_color": "rgba(148, 163, 184, 0.10)",
+    "zero_line": "rgba(148, 163, 184, 0.22)"
+}
+
+PLOTLY_CONFIG = {
+    "displayModeBar": "hover",
+    "displaylogo": False,
+    "responsive": True,
+    "modeBarButtonsToRemove": ["lasso2d", "select2d", "autoScale2d"]
 }
 
 CHART_LAYOUT_DEFAULTS = dict(
-    font=dict(family="Plus Jakarta Sans, Inter, -apple-system, sans-serif", size=11, color=PALETTE["slate_500"]),
+    font=dict(
+        family="Plus Jakarta Sans, Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+        size=11.5,
+        color=PALETTE["slate_500"]
+    ),
     plot_bgcolor="rgba(0,0,0,0)",
     paper_bgcolor="rgba(0,0,0,0)",
-    margin=dict(l=40, r=20, t=48, b=36),
+    margin=dict(l=44, r=24, t=58, b=40),
+    hovermode="closest",
     hoverlabel=dict(
-        bgcolor="#1E293B",
+        bgcolor=PALETTE["slate_900"],
         font_size=12,
         font_family="Plus Jakarta Sans, Inter, sans-serif",
-        font_color="#F8FAFC",
-        bordercolor="rgba(255, 255, 255, 0.15)"
+        font_color=PALETTE["slate_100"],
+        bordercolor=PALETTE["slate_700"]
     )
 )
 
@@ -50,7 +64,7 @@ CHART_LAYOUT_DEFAULTS = dict(
 def render_volume_trend_chart(df: pd.DataFrame) -> None:
     """
     Render daily complaint volume combo chart:
-    - Translucent rounded bar chart for daily volume
+    - Translucent bar chart for daily volume
     - Smooth amber spline line for 7-day rolling average
     """
     if df.empty:
@@ -66,9 +80,8 @@ def render_volume_trend_chart(df: pd.DataFrame) -> None:
             y=df["complaint_volume"],
             name="Daily Volume",
             marker=dict(
-                color=PALETTE["primary"],
-                opacity=0.7,
-                line=dict(color=PALETTE["primary_light"], width=0.5)
+                color="rgba(99, 102, 241, 0.72)",
+                line=dict(color=PALETTE["primary_light"], width=1)
             ),
             hovertemplate="<b>%{x|%b %d, %Y}</b><br>Daily Volume: <b>%{y:,}</b><extra></extra>"
         )
@@ -82,46 +95,60 @@ def render_volume_trend_chart(df: pd.DataFrame) -> None:
                 y=df["rolling_7d_avg"],
                 name="7-Day Rolling Avg",
                 mode="lines+markers",
-                line=dict(color=PALETTE["accent_orange"], width=3, shape="spline"),
-                marker=dict(size=5, color=PALETTE["accent_orange"]),
-                hovertemplate="<b>7-Day Moving Avg:</b> <b>%{y:,.1f}</b><extra></extra>"
+                line=dict(color=PALETTE["accent_orange"], width=2.8, shape="spline"),
+                marker=dict(
+                    size=5.5,
+                    color=PALETTE["accent_orange"],
+                    line=dict(color=PALETTE["surface_card"], width=1.2)
+                ),
+                hovertemplate="<b>%{x|%b %d, %Y}</b><br>7-Day Moving Avg: <b>%{y:,.1f}</b><extra></extra>"
             )
         )
 
+    layout_trend = dict(CHART_LAYOUT_DEFAULTS)
+    layout_trend["hovermode"] = "x unified"
+
     fig.update_layout(
-        **CHART_LAYOUT_DEFAULTS,
+        **layout_trend,
+        bargap=0.28,
         title=dict(
             text="<b>Daily Incident Ingestion & 7-Day Moving Trend</b>",
-            font=dict(family="Plus Jakarta Sans, sans-serif", size=13, color="#FFFFFF"),
-            x=0.01,
+            font=dict(family="Plus Jakarta Sans, sans-serif", size=14, color=PALETTE["slate_100"]),
+            x=0.0,
+            xanchor="left",
             y=0.96
         ),
         xaxis=dict(
             title="",
-            showgrid=True,
-            gridcolor=PALETTE["grid_color"],
+            showgrid=False,
+            linecolor=PALETTE["zero_line"],
             tickformat="%b %d",
-            tickfont=dict(size=10, color=PALETTE["slate_500"])
+            tickfont=dict(size=10.5, color=PALETTE["slate_500"]),
+            automargin=True
         ),
         yaxis=dict(
             title=dict(text="Service Requests", font=dict(size=11, color=PALETTE["slate_500"])),
             showgrid=True,
             gridcolor=PALETTE["grid_color"],
+            zeroline=True,
+            zerolinecolor=PALETTE["zero_line"],
             rangemode="tozero",
-            tickfont=dict(size=10, color=PALETTE["slate_500"])
+            tickfont=dict(size=10.5, color=PALETTE["slate_500"]),
+            separatethousands=True
         ),
         legend=dict(
             orientation="h",
             yanchor="bottom",
-            y=1.02,
+            y=1.03,
             xanchor="right",
-            x=1,
-            font=dict(size=10, color=PALETTE["slate_500"])
+            x=1.0,
+            bgcolor="rgba(0,0,0,0)",
+            font=dict(size=11, color=PALETTE["slate_200"])
         ),
-        height=380
+        height=370
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
 
 
 def render_top_complaints_chart(df: pd.DataFrame) -> None:
@@ -141,7 +168,6 @@ def render_top_complaints_chart(df: pd.DataFrame) -> None:
         y="complaint_type",
         color="complaint_category",
         orientation="h",
-        title="<b>Top Municipal Complaint Types by Volume & Category</b>",
         labels={"complaint_count": "Service Requests", "complaint_type": "", "complaint_category": "Category"},
         color_discrete_sequence=[
             PALETTE["primary"], PALETTE["secondary"], PALETTE["accent_orange"],
@@ -149,32 +175,48 @@ def render_top_complaints_chart(df: pd.DataFrame) -> None:
         ]
     )
 
+    layout_cfg = dict(CHART_LAYOUT_DEFAULTS)
+    layout_cfg["margin"] = dict(l=10, r=20, t=36, b=36)
+
     fig.update_layout(
-        **CHART_LAYOUT_DEFAULTS,
+        **layout_cfg,
+        bargap=0.22,
+        showlegend=False,
         title=dict(
-            text="<b>Top Municipal Complaint Types by Volume & Category</b>",
-            font=dict(family="Plus Jakarta Sans, sans-serif", size=13, color="#FFFFFF"),
-            x=0.01,
-            y=0.96
+            text="<b>Top Municipal Complaint Types</b>",
+            font=dict(family="Plus Jakarta Sans, sans-serif", size=13.5, color=PALETTE["slate_100"]),
+            x=0.0,
+            xanchor="left",
+            y=0.98
         ),
-        xaxis=dict(showgrid=True, gridcolor=PALETTE["grid_color"], tickfont=dict(size=10, color=PALETTE["slate_500"])),
-        yaxis=dict(showgrid=False, tickfont=dict(size=10.5, family="Plus Jakarta Sans, sans-serif", color="#E2E8F0")),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10, color=PALETTE["slate_500"])),
-        height=400
+        xaxis=dict(
+            title=dict(text="Service Requests", font=dict(size=11, color=PALETTE["slate_500"])),
+            showgrid=True,
+            gridcolor=PALETTE["grid_color"],
+            zeroline=False,
+            tickfont=dict(size=10.5, color=PALETTE["slate_500"]),
+            separatethousands=True
+        ),
+        yaxis=dict(
+            showgrid=False,
+            tickfont=dict(size=11, family="Plus Jakarta Sans, sans-serif", color=PALETTE["slate_200"]),
+            automargin=True
+        ),
+        height=420
     )
     fig.update_traces(
-        hovertemplate="<b>%{y}</b><br>Category: %{data.name}<br>Volume: <b>%{x:,}</b><extra></extra>"
+        marker=dict(line=dict(color="rgba(255,255,255,0.08)", width=0.5)),
+        hovertemplate="<b>%{y}</b><br>Category: <b>%{data.name}</b><br>Volume: <b>%{x:,}</b><extra></extra>"
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config=PLOTLY_CONFIG)
 
 
 def render_agency_performance_matrix(df: pd.DataFrame) -> None:
     """
-    Render Agency Performance Matrix:
-    - X-axis: Total Complaints Volume
-    - Y-axis: SLA Compliance Rate (%)
-    - Bubble Size: Average Resolution Time (Hours)
+    Render Agency Performance Matrix with Dual Modes:
+    1. Ranked Comparison (Horizontal bar of agencies by volume & resolution rate)
+    2. Operational Efficiency Matrix (Scatter plot of volume vs. resolution rate %)
     """
     if df.empty:
         st.info("No agency performance records available for current filter selection.")
@@ -182,69 +224,167 @@ def render_agency_performance_matrix(df: pd.DataFrame) -> None:
 
     plot_df = df.copy()
     plot_df["avg_resolution_hours"] = pd.to_numeric(plot_df.get("avg_resolution_hours"), errors="coerce").fillna(0.0)
-    plot_df["sla_compliance_rate"] = pd.to_numeric(plot_df.get("sla_compliance_rate"), errors="coerce").fillna(0.0)
     plot_df["closure_rate"] = pd.to_numeric(plot_df.get("closure_rate"), errors="coerce").fillna(0.0)
     plot_df["total_complaints"] = pd.to_numeric(plot_df.get("total_complaints"), errors="coerce").fillna(0).astype(int)
     plot_df["agency_name"] = plot_df.get("agency_name", "").fillna("Unknown")
     plot_df["agency_code"] = plot_df.get("agency_code", "").fillna("N/A")
-    plot_df["bubble_size"] = plot_df["avg_resolution_hours"].clip(lower=2.0)
+    plot_df["bubble_size"] = plot_df["avg_resolution_hours"].clip(lower=6.0, upper=36.0)
 
-    fig = px.scatter(
-        plot_df,
-        x="total_complaints",
-        y="sla_compliance_rate",
-        size="bubble_size",
-        color="avg_resolution_hours",
-        text="agency_code",
-        title="<b>Agency Performance Matrix (Volume vs. SLA % vs. Avg Duration)</b>",
-        labels={
-            "total_complaints": "Ticket Volume",
-            "sla_compliance_rate": "SLA Compliance (%)",
-            "avg_resolution_hours": "Avg Duration (Hrs)",
-            "agency_code": "Agency"
-        },
-        color_continuous_scale="Viridis_r",
-        size_max=36
-    )
+    # Filter out agencies with 0 volume
+    plot_df = plot_df[plot_df["total_complaints"] > 0].copy()
+    if plot_df.empty:
+        st.info("No active agency records available.")
+        return
 
-    fig.update_traces(
-        textposition="top center",
-        textfont=dict(family="Plus Jakarta Sans, sans-serif", size=10, weight="bold", color="#E2E8F0"),
-        hovertemplate=(
-            "<b>%{customdata[0]}</b> (%{text})<br>"
-            "Total Ingested: <b>%{x:,}</b><br>"
-            "SLA Compliance: <b>%{y:.1f}%</b><br>"
-            "Avg Resolution: <b>%{customdata[2]:.1f} hrs</b><br>"
-            "Closure Rate: <b>%{customdata[1]:.1f}%</b><extra></extra>"
-        ),
-        customdata=plot_df[["agency_name", "closure_rate", "avg_resolution_hours"]].values
-    )
+    # Semantic color gradient (emerald for high closure rate, amber for medium, rose for low)
+    semantic_scale = [
+        [0.0, PALETTE["accent_red"]],
+        [0.40, PALETTE["accent_orange"]],
+        [0.70, PALETTE["secondary"]],
+        [1.0, PALETTE["accent_green"]]
+    ]
 
-    # Add SLA Target Reference Line at 85%
-    fig.add_hline(
-        y=85,
-        line_dash="dot",
-        line_color=PALETTE["accent_green"],
-        line_width=1.5,
-        annotation_text="SLA Benchmark (85%)",
-        annotation_position="bottom right",
-        annotation_font=dict(size=9.5, color=PALETTE["accent_green"])
-    )
+    tab_rank, tab_scatter = st.tabs(["Agency Performance Ranking", "Resolution Efficiency Matrix"])
 
-    fig.update_layout(
-        **CHART_LAYOUT_DEFAULTS,
-        title=dict(
-            text="<b>Agency Operational Matrix (Volume vs. SLA Compliance % vs. Avg Duration)</b>",
-            font=dict(family="Plus Jakarta Sans, sans-serif", size=13, color="#FFFFFF"),
-            x=0.01,
-            y=0.96
-        ),
-        xaxis=dict(showgrid=True, gridcolor=PALETTE["grid_color"], tickfont=dict(size=10, color=PALETTE["slate_500"])),
-        yaxis=dict(showgrid=True, gridcolor=PALETTE["grid_color"], range=[-5, 108], tickfont=dict(size=10, color=PALETTE["slate_500"])),
-        height=400
-    )
+    with tab_rank:
+        rank_df = plot_df.sort_values(by="total_complaints", ascending=True)
+        fig_rank = px.bar(
+            rank_df,
+            x="total_complaints",
+            y="agency_code",
+            color="closure_rate",
+            orientation="h",
+            color_continuous_scale=semantic_scale,
+            labels={
+                "total_complaints": "Total Requests",
+                "agency_code": "Agency",
+                "closure_rate": "Resolution Rate (%)"
+            }
+        )
 
-    st.plotly_chart(fig, use_container_width=True)
+        layout_rank = dict(CHART_LAYOUT_DEFAULTS)
+        layout_rank["margin"] = dict(l=10, r=20, t=28, b=36)
+
+        fig_rank.update_layout(
+            **layout_rank,
+            bargap=0.22,
+            xaxis=dict(
+                title=dict(text="Total Service Requests", font=dict(size=11, color=PALETTE["slate_500"])),
+                showgrid=True,
+                gridcolor=PALETTE["grid_color"],
+                zeroline=False,
+                tickfont=dict(size=10.5, color=PALETTE["slate_500"]),
+                separatethousands=True
+            ),
+            yaxis=dict(
+                showgrid=False,
+                tickfont=dict(size=11, family="Plus Jakarta Sans, sans-serif", color=PALETTE["slate_200"]),
+                automargin=True
+            ),
+            coloraxis_colorbar=dict(
+                title=dict(text="Resolution %", font=dict(size=10.5, color=PALETTE["slate_200"])),
+                thickness=10,
+                len=0.72,
+                outlinewidth=0,
+                ticksuffix="%",
+                tickfont=dict(size=10, color=PALETTE["slate_500"])
+            ),
+            height=370
+        )
+        fig_rank.update_traces(
+            hovertemplate=(
+                "<b>%{customdata[0]}</b> (%{y})<br>"
+                "Total Ingested: <b>%{x:,}</b><br>"
+                "Resolution Rate: <b>%{customdata[1]:.1f}%</b><br>"
+                "Avg Resolution Duration: <b>%{customdata[2]:.1f} hrs</b><extra></extra>"
+            ),
+            customdata=rank_df[["agency_name", "closure_rate", "avg_resolution_hours"]].values
+        )
+        st.plotly_chart(fig_rank, use_container_width=True, config=PLOTLY_CONFIG)
+
+    with tab_scatter:
+        # Scatter plot using REAL closure_rate (0% to 100%) instead of 0% SLA
+        scatter_df = plot_df.copy()
+        scatter_df["display_label"] = scatter_df.apply(
+            lambda r: r["agency_code"] if r["total_complaints"] >= 1500 else "",
+            axis=1
+        )
+
+        fig_scatter = px.scatter(
+            scatter_df,
+            x="total_complaints",
+            y="closure_rate",
+            size="bubble_size",
+            color="avg_resolution_hours",
+            text="display_label",
+            labels={
+                "total_complaints": "Ticket Volume",
+                "closure_rate": "Resolution Rate (%)",
+                "avg_resolution_hours": "Avg Hrs"
+            },
+            color_continuous_scale="Viridis_r",
+            size_max=32
+        )
+
+        fig_scatter.update_traces(
+            textposition="top center",
+            textfont=dict(family="Plus Jakarta Sans, sans-serif", size=10.5, weight="bold", color=PALETTE["slate_100"]),
+            marker=dict(
+                opacity=0.88,
+                line=dict(color="rgba(15, 23, 42, 0.85)", width=1.2)
+            ),
+            hovertemplate=(
+                "<b>%{customdata[0]}</b> (%{customdata[3]})<br>"
+                "Total Ingested: <b>%{x:,}</b><br>"
+                "Resolution Rate: <b>%{y:.1f}%</b><br>"
+                "Avg Resolution: <b>%{customdata[2]:.1f} hrs</b><extra></extra>"
+            ),
+            customdata=scatter_df[["agency_name", "closure_rate", "avg_resolution_hours", "agency_code"]].values
+        )
+
+        # Add Resolution Benchmark Reference Line at 80%
+        fig_scatter.add_hline(
+            y=80,
+            line_dash="dot",
+            line_color=PALETTE["accent_green"],
+            line_width=1.5,
+            annotation_text="Target Benchmark (80%)",
+            annotation_position="bottom right",
+            annotation_font=dict(size=10, color=PALETTE["accent_green"])
+        )
+
+        layout_scatter = dict(CHART_LAYOUT_DEFAULTS)
+        layout_scatter["margin"] = dict(l=44, r=20, t=28, b=36)
+
+        fig_scatter.update_layout(
+            **layout_scatter,
+            xaxis=dict(
+                title=dict(text="Ticket Volume", font=dict(size=11, color=PALETTE["slate_500"])),
+                showgrid=True,
+                gridcolor=PALETTE["grid_color"],
+                zeroline=False,
+                tickfont=dict(size=10.5, color=PALETTE["slate_500"]),
+                separatethousands=True
+            ),
+            yaxis=dict(
+                title=dict(text="Resolution Rate (%)", font=dict(size=11, color=PALETTE["slate_500"])),
+                showgrid=True,
+                gridcolor=PALETTE["grid_color"],
+                zeroline=False,
+                range=[-5, 110],
+                ticksuffix="%",
+                tickfont=dict(size=10.5, color=PALETTE["slate_500"])
+            ),
+            coloraxis_colorbar=dict(
+                title=dict(text="Avg Hrs", font=dict(size=10.5, color=PALETTE["slate_200"])),
+                thickness=10,
+                len=0.72,
+                outlinewidth=0,
+                tickfont=dict(size=10, color=PALETTE["slate_500"])
+            ),
+            height=370
+        )
+        st.plotly_chart(fig_scatter, use_container_width=True, config=PLOTLY_CONFIG)
 
 
 def render_geographic_charts(
@@ -276,9 +416,8 @@ def render_geographic_charts(
                     y=borough_df["total_complaints"],
                     name="Complaint Volume",
                     marker=dict(
-                        color=PALETTE["primary"],
-                        opacity=0.85,
-                        line=dict(color=PALETTE["primary_light"], width=0.5)
+                        color="rgba(99, 102, 241, 0.80)",
+                        line=dict(color=PALETTE["primary_light"], width=1)
                     ),
                     hovertemplate="<b>%{x}</b><br>Volume: <b>%{y:,}</b><extra></extra>"
                 ),
@@ -291,8 +430,12 @@ def render_geographic_charts(
                     y=borough_df["avg_resolution_hours"],
                     name="Avg Resolution (Hrs)",
                     mode="lines+markers",
-                    line=dict(color=PALETTE["accent_orange"], width=3),
-                    marker=dict(size=8, color=PALETTE["accent_orange"]),
+                    line=dict(color=PALETTE["accent_orange"], width=2.8),
+                    marker=dict(
+                        size=8,
+                        color=PALETTE["accent_orange"],
+                        line=dict(color=PALETTE["surface_card"], width=1.5)
+                    ),
                     hovertemplate="<b>%{x}</b><br>Avg Resolution: <b>%{y:.1f} hrs</b><extra></extra>"
                 ),
                 secondary_y=True
@@ -300,20 +443,47 @@ def render_geographic_charts(
 
             fig_b.update_layout(
                 **CHART_LAYOUT_DEFAULTS,
+                bargap=0.38,
                 title=dict(
                     text="<b>Complaint Volume & Average Resolution Time by Borough</b>",
-                    font=dict(family="Plus Jakarta Sans, sans-serif", size=13, color="#FFFFFF"),
-                    x=0.01,
+                    font=dict(family="Plus Jakarta Sans, sans-serif", size=14, color=PALETTE["slate_100"]),
+                    x=0.0,
+                    xanchor="left",
                     y=0.96
                 ),
-                xaxis=dict(showgrid=False, tickfont=dict(size=10.5, color="#E2E8F0")),
-                yaxis=dict(title="Complaints", showgrid=True, gridcolor=PALETTE["grid_color"], tickfont=dict(size=10, color=PALETTE["slate_500"])),
-                yaxis2=dict(title="Avg Resolution (Hours)", showgrid=False, rangemode="tozero", tickfont=dict(size=10, color=PALETTE["slate_500"])),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10, color=PALETTE["slate_500"])),
-                height=380
+                xaxis=dict(
+                    showgrid=False,
+                    linecolor=PALETTE["zero_line"],
+                    tickfont=dict(size=11, color=PALETTE["slate_200"])
+                ),
+                yaxis=dict(
+                    title=dict(text="Complaints", font=dict(size=11, color=PALETTE["slate_500"])),
+                    showgrid=True,
+                    gridcolor=PALETTE["grid_color"],
+                    zeroline=False,
+                    tickfont=dict(size=10.5, color=PALETTE["slate_500"]),
+                    separatethousands=True
+                ),
+                yaxis2=dict(
+                    title=dict(text="Avg Resolution (Hours)", font=dict(size=11, color=PALETTE["accent_orange"])),
+                    showgrid=False,
+                    zeroline=False,
+                    rangemode="tozero",
+                    tickfont=dict(size=10.5, color=PALETTE["slate_500"])
+                ),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.03,
+                    xanchor="right",
+                    x=1.0,
+                    bgcolor="rgba(0,0,0,0)",
+                    font=dict(size=11, color=PALETTE["slate_200"])
+                ),
+                height=390
             )
 
-            st.plotly_chart(fig_b, use_container_width=True)
+            st.plotly_chart(fig_b, use_container_width=True, config=PLOTLY_CONFIG)
 
     with tab_zip:
         if zip_df.empty:
@@ -335,21 +505,45 @@ def render_geographic_charts(
             )
             fig_z.update_layout(
                 **CHART_LAYOUT_DEFAULTS,
+                bargap=0.28,
                 title=dict(
                     text="<b>Top 10 Incident Zip Codes by Volume</b>",
-                    font=dict(family="Plus Jakarta Sans, sans-serif", size=13, color="#FFFFFF"),
-                    x=0.01,
+                    font=dict(family="Plus Jakarta Sans, sans-serif", size=14, color=PALETTE["slate_100"]),
+                    x=0.0,
+                    xanchor="left",
                     y=0.96
                 ),
-                xaxis=dict(showgrid=True, gridcolor=PALETTE["grid_color"], tickfont=dict(size=10, color=PALETTE["slate_500"])),
-                yaxis=dict(type="category", tickfont=dict(size=10.5, color="#E2E8F0")),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10, color=PALETTE["slate_500"])),
-                height=380
+                xaxis=dict(
+                    title=dict(text="Complaints", font=dict(size=11, color=PALETTE["slate_500"])),
+                    showgrid=True,
+                    gridcolor=PALETTE["grid_color"],
+                    zeroline=False,
+                    tickfont=dict(size=10.5, color=PALETTE["slate_500"]),
+                    separatethousands=True
+                ),
+                yaxis=dict(
+                    type="category",
+                    title=dict(text="ZIP Code", font=dict(size=11, color=PALETTE["slate_500"])),
+                    tickfont=dict(size=11, color=PALETTE["slate_200"]),
+                    automargin=True
+                ),
+                legend=dict(
+                    title=dict(text=""),
+                    orientation="h",
+                    yanchor="top",
+                    y=-0.14,
+                    xanchor="center",
+                    x=0.5,
+                    bgcolor="rgba(0,0,0,0)",
+                    font=dict(size=10.5, color=PALETTE["slate_200"])
+                ),
+                height=410
             )
             fig_z.update_traces(
+                marker=dict(line=dict(color="rgba(255,255,255,0.08)", width=0.5)),
                 hovertemplate="<b>ZIP: %{y}</b><br>Borough: %{data.name}<br>Volume: <b>%{x:,}</b><extra></extra>"
             )
-            st.plotly_chart(fig_z, use_container_width=True)
+            st.plotly_chart(fig_z, use_container_width=True, config=PLOTLY_CONFIG)
 
     with tab_map:
         if cluster_df is None or cluster_df.empty:
@@ -382,16 +576,27 @@ def render_geographic_charts(
                     fig_m = px.scatter_mapbox(plot_map, mapbox_style="carto-darkmatter", **map_args)
 
                 layout_map = dict(CHART_LAYOUT_DEFAULTS)
-                layout_map["margin"] = dict(l=10, r=10, t=44, b=10)
-                layout_map["height"] = 460
+                layout_map["margin"] = dict(l=8, r=8, t=52, b=8)
+                layout_map["height"] = 480
                 layout_map["title"] = dict(
                     text="<b>NYC Incident Geospatial Density Clusters</b>",
-                    font=dict(family="Plus Jakarta Sans, sans-serif", size=13, color="#FFFFFF"),
+                    font=dict(family="Plus Jakarta Sans, sans-serif", size=14, color=PALETTE["slate_100"]),
                     x=0.01,
-                    y=0.96
+                    xanchor="left",
+                    y=0.97
+                )
+                layout_map["legend"] = dict(
+                    title=dict(text=""),
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.01,
+                    xanchor="right",
+                    x=0.99,
+                    bgcolor="rgba(0,0,0,0)",
+                    font=dict(size=11, color=PALETTE["slate_200"])
                 )
                 fig_m.update_layout(**layout_map)
-                st.plotly_chart(fig_m, use_container_width=True)
+                st.plotly_chart(fig_m, use_container_width=True, config=PLOTLY_CONFIG)
 
 
 def render_operational_channels_chart(channel_df: pd.DataFrame, weekday_df: pd.DataFrame) -> None:
@@ -400,7 +605,7 @@ def render_operational_channels_chart(channel_df: pd.DataFrame, weekday_df: pd.D
     - Donut chart of submission channels (Online, Phone, Mobile, Unknown)
     - Grouped Bar chart of Weekday vs Weekend volume and resolution time
     """
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns(2, gap="medium")
 
     with col1:
         if channel_df.empty:
@@ -410,33 +615,47 @@ def render_operational_channels_chart(channel_df: pd.DataFrame, weekday_df: pd.D
                 channel_df,
                 names="channel",
                 values="total",
-                hole=0.55,
+                hole=0.60,
                 title="<b>Submission Channel Distribution</b>",
                 color="channel",
                 color_discrete_sequence=[
                     PALETTE["primary"], PALETTE["secondary"],
-                    PALETTE["accent_orange"], PALETTE["accent_green"]
+                    PALETTE["accent_orange"], PALETTE["accent_green"],
+                    PALETTE["accent_purple"]
                 ]
             )
             fig_c.update_traces(
                 textposition="inside",
-                textinfo="percent+label",
-                textfont=dict(family="Plus Jakarta Sans, sans-serif", size=11, color="white"),
+                textinfo="percent",
+                insidetextorientation="horizontal",
+                marker=dict(line=dict(color=PALETTE["surface_card"], width=2)),
+                textfont=dict(family="Plus Jakarta Sans, sans-serif", size=11.5, color="#FFFFFF"),
                 hovertemplate="<b>%{label}</b><br>Volume: <b>%{value:,}</b><br>Share: <b>%{percent}</b><extra></extra>"
             )
+            layout_donut = dict(CHART_LAYOUT_DEFAULTS)
+            layout_donut["margin"] = dict(l=20, r=20, t=54, b=48)
             fig_c.update_layout(
-                **CHART_LAYOUT_DEFAULTS,
+                **layout_donut,
                 title=dict(
                     text="<b>Civic Intake Channel Distribution</b>",
-                    font=dict(family="Plus Jakarta Sans, sans-serif", size=13, color="#FFFFFF"),
-                    x=0.01,
+                    font=dict(family="Plus Jakarta Sans, sans-serif", size=14, color=PALETTE["slate_100"]),
+                    x=0.0,
+                    xanchor="left",
                     y=0.96
                 ),
                 showlegend=True,
-                legend=dict(orientation="h", yanchor="bottom", y=-0.12, xanchor="center", x=0.5, font=dict(size=10, color=PALETTE["slate_500"])),
-                height=360
+                legend=dict(
+                    orientation="h",
+                    yanchor="top",
+                    y=-0.04,
+                    xanchor="center",
+                    x=0.5,
+                    bgcolor="rgba(0,0,0,0)",
+                    font=dict(size=11, color=PALETTE["slate_200"])
+                ),
+                height=370
             )
-            st.plotly_chart(fig_c, use_container_width=True)
+            st.plotly_chart(fig_c, use_container_width=True, config=PLOTLY_CONFIG)
 
     with col2:
         if weekday_df.empty:
@@ -450,9 +669,8 @@ def render_operational_channels_chart(channel_df: pd.DataFrame, weekday_df: pd.D
                     y=weekday_df["total"],
                     name="Volume",
                     marker=dict(
-                        color=PALETTE["secondary"],
-                        opacity=0.85,
-                        line=dict(color=PALETTE["secondary"], width=0.5)
+                        color="rgba(56, 189, 248, 0.78)",
+                        line=dict(color=PALETTE["secondary"], width=1)
                     ),
                     hovertemplate="<b>%{x}</b><br>Volume: <b>%{y:,}</b><extra></extra>"
                 ),
@@ -465,8 +683,12 @@ def render_operational_channels_chart(channel_df: pd.DataFrame, weekday_df: pd.D
                     y=weekday_df["avg_resolution_hours"],
                     name="Avg Resolution (Hrs)",
                     mode="lines+markers",
-                    line=dict(color=PALETTE["accent_orange"], width=3),
-                    marker=dict(size=8, color=PALETTE["accent_orange"]),
+                    line=dict(color=PALETTE["accent_orange"], width=2.8),
+                    marker=dict(
+                        size=8.5,
+                        color=PALETTE["accent_orange"],
+                        line=dict(color=PALETTE["surface_card"], width=1.5)
+                    ),
                     hovertemplate="<b>%{x}</b><br>Avg Resolution: <b>%{y:.1f} hrs</b><extra></extra>"
                 ),
                 secondary_y=True
@@ -474,16 +696,43 @@ def render_operational_channels_chart(channel_df: pd.DataFrame, weekday_df: pd.D
 
             fig_w.update_layout(
                 **CHART_LAYOUT_DEFAULTS,
+                bargap=0.45,
                 title=dict(
                     text="<b>Weekday vs. Weekend Operational Dynamics</b>",
-                    font=dict(family="Plus Jakarta Sans, sans-serif", size=13, color="#FFFFFF"),
-                    x=0.01,
+                    font=dict(family="Plus Jakarta Sans, sans-serif", size=14, color=PALETTE["slate_100"]),
+                    x=0.0,
+                    xanchor="left",
                     y=0.96
                 ),
-                xaxis=dict(showgrid=False, tickfont=dict(size=10.5, color="#E2E8F0")),
-                yaxis=dict(title="Complaints", showgrid=True, gridcolor=PALETTE["grid_color"], tickfont=dict(size=10, color=PALETTE["slate_500"])),
-                yaxis2=dict(title="Avg Resolution (Hours)", showgrid=False, rangemode="tozero", tickfont=dict(size=10, color=PALETTE["slate_500"])),
-                legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1, font=dict(size=10, color=PALETTE["slate_500"])),
-                height=360
+                xaxis=dict(
+                    showgrid=False,
+                    linecolor=PALETTE["zero_line"],
+                    tickfont=dict(size=11, color=PALETTE["slate_200"])
+                ),
+                yaxis=dict(
+                    title=dict(text="Complaints", font=dict(size=11, color=PALETTE["slate_500"])),
+                    showgrid=True,
+                    gridcolor=PALETTE["grid_color"],
+                    zeroline=False,
+                    tickfont=dict(size=10.5, color=PALETTE["slate_500"]),
+                    separatethousands=True
+                ),
+                yaxis2=dict(
+                    title=dict(text="Avg Resolution (Hours)", font=dict(size=11, color=PALETTE["accent_orange"])),
+                    showgrid=False,
+                    zeroline=False,
+                    rangemode="tozero",
+                    tickfont=dict(size=10.5, color=PALETTE["slate_500"])
+                ),
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.03,
+                    xanchor="right",
+                    x=1.0,
+                    bgcolor="rgba(0,0,0,0)",
+                    font=dict(size=11, color=PALETTE["slate_200"])
+                ),
+                height=370
             )
-            st.plotly_chart(fig_w, use_container_width=True)
+            st.plotly_chart(fig_w, use_container_width=True, config=PLOTLY_CONFIG)

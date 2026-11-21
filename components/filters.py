@@ -21,12 +21,12 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
 
     # 2. System Status & Warehouse Telemetry Container
     with st.sidebar.container(border=True):
-        st.markdown("**Warehouse Status**")
-        st.caption("PostgreSQL 17 · 30-Day Rolling Policy")
-        st.progress(0.322, text="Storage: 161 MB / 500 MB (32%)")
+        st.markdown("**Warehouse Telemetry**")
+        st.caption("PostgreSQL 17 · 30-Day Rolling Retention")
+        st.progress(0.322, text="Storage Used: 161 MB / 500 MB (32%)")
 
     st.sidebar.markdown("---")
-    st.sidebar.markdown("**Global Filters**")
+    st.sidebar.markdown("**Global Filter Controls**")
 
     # Initialize session state for filter widgets if not present
     if "filter_date_range_picker" not in st.session_state:
@@ -41,8 +41,8 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
         st.session_state["filter_statuses_widget"] = []
 
     # Quick Date Range Presets
-    st.sidebar.caption("Date Window Presets")
-    p_col1, p_col2, p_col3 = st.sidebar.columns(3)
+    st.sidebar.caption("QUICK DATE WINDOWS")
+    p_col1, p_col2, p_col3 = st.sidebar.columns(3, gap="small")
     max_d = filter_options["max_date"]
 
     with p_col1:
@@ -63,7 +63,7 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
             st.rerun()
 
     # Reset button & active filter counter
-    col_reset, col_count = st.sidebar.columns([1, 1])
+    col_reset, col_count = st.sidebar.columns([1, 1], gap="small")
     with col_reset:
         if st.button("Reset All", use_container_width=True, help="Reset all filters to full NYC dataset"):
             st.session_state["filter_date_range_picker"] = (filter_options["min_date"], filter_options["max_date"])
@@ -94,6 +94,8 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
         selected_date_range = (date_val, date_val)
     else:
         selected_date_range = (filter_options["min_date"], filter_options["max_date"])
+
+    st.sidebar.caption("DIMENSIONS")
 
     # 2. Borough Filter
     selected_boroughs = st.sidebar.multiselect(
@@ -144,7 +146,7 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
         if active_filters > 0:
             st.caption(f"⚡ **{active_filters} Active Filter(s)**")
         else:
-            st.caption("Showing All NYC Data")
+            st.caption("Scope: All NYC Data")
 
     st.sidebar.markdown("---")
 

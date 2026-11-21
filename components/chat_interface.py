@@ -18,13 +18,25 @@ from services.chatbot_service import (
 
 PALETTE = {
     "primary": "#6366F1",
+    "primary_light": "#818CF8",
     "secondary": "#38BDF8",
     "accent_orange": "#FBBF24",
     "accent_green": "#34D399",
     "accent_purple": "#A78BFA",
+    "surface_card": "#111827",
     "slate_900": "#0F172A",
+    "slate_700": "#334155",
     "slate_500": "#94A3B8",
-    "grid_color": "rgba(255, 255, 255, 0.06)"
+    "slate_200": "#E2E8F0",
+    "slate_100": "#F8FAFC",
+    "grid_color": "rgba(148, 163, 184, 0.10)"
+}
+
+CHAT_PLOTLY_CONFIG = {
+    "displayModeBar": "hover",
+    "displaylogo": False,
+    "responsive": True,
+    "modeBarButtonsToRemove": ["lasso2d", "select2d", "autoScale2d"]
 }
 
 
@@ -58,7 +70,7 @@ def render_chat_visualization(df: pd.DataFrame, key_prefix: str = "chat") -> Non
 
     # Case 1: Single-row aggregate result (e.g. Total count or average)
     if len(df) == 1:
-        cols = st.columns(min(len(df.columns), 4))
+        cols = st.columns(min(len(df.columns), 4), gap="medium")
         for idx, col_name in enumerate(df.columns):
             val = df[col_name].iloc[0]
             if pd.isna(val) or val is None:
@@ -76,7 +88,7 @@ def render_chat_visualization(df: pd.DataFrame, key_prefix: str = "chat") -> Non
 
     # If no numeric metrics to plot, render table directly
     if not num_cols:
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, use_container_width=True, hide_index=True)
         return
 
     metric_col = num_cols[0]
@@ -96,7 +108,7 @@ def render_chat_visualization(df: pd.DataFrame, key_prefix: str = "chat") -> Non
     x_label = str(x_col).replace("_", " ").title()
 
     # Visual Format Selector
-    col_type, _ = st.columns([2, 4])
+    col_type, _ = st.columns([2, 5])
     with col_type:
         chart_choice = st.selectbox(
             "Visual Format",
@@ -107,17 +119,30 @@ def render_chat_visualization(df: pd.DataFrame, key_prefix: str = "chat") -> Non
         )
 
     layout_args = dict(
-        font=dict(family="Plus Jakarta Sans, Inter, sans-serif", size=11, color=PALETTE["slate_500"]),
+        font=dict(family="Plus Jakarta Sans, Inter, sans-serif", size=11.5, color=PALETTE["slate_500"]),
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
-        margin=dict(l=30, r=20, t=30, b=30),
-        xaxis=dict(showgrid=True, gridcolor=PALETTE["grid_color"], tickfont=dict(size=10)),
-        yaxis=dict(showgrid=True, gridcolor=PALETTE["grid_color"], tickfont=dict(size=10)),
+        margin=dict(l=36, r=24, t=28, b=36),
+        xaxis=dict(
+            showgrid=True,
+            gridcolor=PALETTE["grid_color"],
+            zeroline=False,
+            tickfont=dict(size=10.5, color=PALETTE["slate_500"]),
+            automargin=True
+        ),
+        yaxis=dict(
+            showgrid=True,
+            gridcolor=PALETTE["grid_color"],
+            zeroline=False,
+            tickfont=dict(size=10.5, color=PALETTE["slate_200"]),
+            automargin=True
+        ),
         hoverlabel=dict(
             bgcolor=PALETTE["slate_900"],
             font_size=12,
             font_family="Plus Jakarta Sans, sans-serif",
-            font_color="#F8FAFC"
+            font_color=PALETTE["slate_100"],
+            bordercolor=PALETTE["slate_700"]
         )
     )
 
@@ -131,9 +156,18 @@ def render_chat_visualization(df: pd.DataFrame, key_prefix: str = "chat") -> Non
             color_discrete_sequence=[PALETTE["primary"]],
             labels={metric_col: metric_label, x_col: x_label}
         )
-        fig.update_layout(**layout_args, height=max(260, min(500, len(plot_df) * 28)))
-        fig.update_traces(hovertemplate="<b>%{y}</b>: %{x:,}<extra></extra>")
-        st.plotly_chart(fig, use_container_width=True)
+        fig.update_layout(
+            **layout_args,
+            bargap=0.28,
+            height=max(270, min(520, len(plot_df) * 30))
+        )
+        fig.update_yaxes(showgrid=False)
+        fig.update_xaxes(separatethousands=True)
+        fig.update_traces(
+            marker=dict(line=dict(color=PALETTE["primary_light"], width=0.8)),
+            hovertemplate="<b>%{y}</b>: <b>%{x:,}</b><extra></extra>"
+        )
+        st.plotly_chart(fig, use_container_width=True, config=CHAT_PLOTLY_CONFIG)
 
     elif chart_choice == "Line Chart":
         fig = px.line(
@@ -144,13 +178,15 @@ def render_chat_visualization(df: pd.DataFrame, key_prefix: str = "chat") -> Non
             color_discrete_sequence=[PALETTE["secondary"]],
             labels={metric_col: metric_label, x_col: x_label}
         )
-        fig.update_layout(**layout_args, height=350)
+        fig.update_layout(**layout_args, height=360)
+        fig.update_xaxes(showgrid=False)
+        fig.update_yaxes(separatethousands=True)
         fig.update_traces(
-            line=dict(width=2.5, shape="spline"),
-            marker=dict(size=6),
-            hovertemplate="<b>%{x}</b>: %{y:,}<extra></extra>"
+            line=dict(width=2.6, shape="spline"),
+            marker=dict(size=6, line=dict(color=PALETTE["surface_card"], width=1.2)),
+            hovertemplate="<b>%{x}</b>: <b>%{y:,}</b><extra></extra>"
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True, config=CHAT_PLOTLY_CONFIG)
 
     elif chart_choice == "Area Chart":
         fig = px.area(
@@ -160,9 +196,14 @@ def render_chat_visualization(df: pd.DataFrame, key_prefix: str = "chat") -> Non
             color_discrete_sequence=[PALETTE["accent_orange"]],
             labels={metric_col: metric_label, x_col: x_label}
         )
-        fig.update_layout(**layout_args, height=350)
-        fig.update_traces(hovertemplate="<b>%{x}</b>: %{y:,}<extra></extra>")
-        st.plotly_chart(fig, use_container_width=True)
+        fig.update_layout(**layout_args, height=360)
+        fig.update_xaxes(showgrid=False)
+        fig.update_yaxes(separatethousands=True)
+        fig.update_traces(
+            line=dict(width=2.4),
+            hovertemplate="<b>%{x}</b>: <b>%{y:,}</b><extra></extra>"
+        )
+        st.plotly_chart(fig, use_container_width=True, config=CHAT_PLOTLY_CONFIG)
 
 
 def render_copilot_chat() -> None:
@@ -186,26 +227,28 @@ def render_copilot_chat() -> None:
     # API Key Configuration
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        user_key = st.text_input(
-            "Gemini API Key Required",
-            type="password",
-            help="Enter your Google AI Studio API key. It remains session-isolated.",
-            key="user_entered_gemini_key"
-        )
-        if user_key:
-            api_key = user_key
-            st.session_state["session_gemini_key"] = user_key
-        else:
-            api_key = st.session_state.get("session_gemini_key")
+        with st.container(border=True):
+            user_key = st.text_input(
+                "Gemini API Key Required",
+                type="password",
+                help="Enter your Google AI Studio API key. It remains session-isolated.",
+                key="user_entered_gemini_key"
+            )
+            if user_key:
+                api_key = user_key
+                st.session_state["session_gemini_key"] = user_key
+            else:
+                api_key = st.session_state.get("session_gemini_key")
 
     # Clickable Starter Questions
-    st.caption("SUGGESTED ANALYTICAL INQUIRIES")
-    clicked_question: Optional[str] = None
-    cols = st.columns(2)
-    for idx, q_text in enumerate(STARTER_QUESTIONS):
-        with cols[idx % 2]:
-            if st.button(q_text, key=f"starter_q_{idx}", use_container_width=True):
-                clicked_question = q_text
+    with st.container(border=True):
+        st.caption("SUGGESTED ANALYTICAL INQUIRIES")
+        clicked_question: Optional[str] = None
+        cols = st.columns(2, gap="small")
+        for idx, q_text in enumerate(STARTER_QUESTIONS):
+            with cols[idx % 2]:
+                if st.button(q_text, key=f"starter_q_{idx}", use_container_width=True):
+                    clicked_question = q_text
 
     # Render previous conversation history
     for i, msg in enumerate(st.session_state.copilot_messages):
@@ -220,7 +263,7 @@ def render_copilot_chat() -> None:
                 with tab_viz:
                     render_chat_visualization(df, key_prefix=f"history_{i}")
                 with tab_data:
-                    st.dataframe(df, use_container_width=True)
+                    st.dataframe(df, use_container_width=True, hide_index=True)
                     csv_bytes = df.to_csv(index=False).encode("utf-8")
                     st.download_button(
                         label="Download CSV Dataset",
@@ -262,7 +305,7 @@ def render_copilot_chat() -> None:
                         with tab_viz:
                             render_chat_visualization(df, key_prefix=f"live_{current_idx}")
                         with tab_data:
-                            st.dataframe(df, use_container_width=True)
+                            st.dataframe(df, use_container_width=True, hide_index=True)
                             csv_bytes = df.to_csv(index=False).encode("utf-8")
                             st.download_button(
                                 label="Download CSV Dataset",
