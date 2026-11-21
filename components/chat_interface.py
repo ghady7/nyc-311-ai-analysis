@@ -17,14 +17,14 @@ from services.chatbot_service import (
 )
 
 PALETTE = {
-    "primary": "#4F46E5",
-    "secondary": "#0EA5E9",
-    "accent_orange": "#F59E0B",
-    "accent_green": "#10B981",
-    "accent_purple": "#8B5CF6",
+    "primary": "#6366F1",
+    "secondary": "#38BDF8",
+    "accent_orange": "#FBBF24",
+    "accent_green": "#34D399",
+    "accent_purple": "#A78BFA",
     "slate_900": "#0F172A",
-    "slate_500": "#64748B",
-    "grid_color": "#F1F5F9"
+    "slate_500": "#94A3B8",
+    "grid_color": "rgba(255, 255, 255, 0.06)"
 }
 
 

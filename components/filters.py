@@ -44,8 +44,8 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
     </div>
     """, unsafe_allow_html=True)
 
-    st.sidebar.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
-    st.sidebar.markdown("### 🔍 Global Analytical Filters")
+    st.sidebar.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+    st.sidebar.markdown("<div style='font-size: 1.05rem; font-weight: 800; color: #FFFFFF; margin-bottom: 8px;'>🔍 Analytical Filters</div>", unsafe_allow_html=True)
 
     # Initialize session state for filter widgets if not present
     if "filter_date_range_picker" not in st.session_state:
@@ -60,7 +60,7 @@ def render_sidebar_filters(filter_options: Dict[str, Any]) -> Dict[str, Any]:
         st.session_state["filter_statuses_widget"] = []
 
     # Quick Date Range Presets
-    st.sidebar.markdown("<span style='font-size: 0.75rem; font-weight: 700; color: #64748B;'>DATE PRESETS</span>", unsafe_allow_html=True)
+    st.sidebar.markdown("<div style='font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; color: #818CF8; margin-bottom: 6px;'>DATE WINDOW PRESETS</div>", unsafe_allow_html=True)
     p_col1, p_col2, p_col3 = st.sidebar.columns(3)
     max_d = filter_options["max_date"]
 
